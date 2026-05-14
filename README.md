@@ -1,6 +1,6 @@
 # Domo MCP Server
 
-MCP server exposing Domo internal APIs as tools. 542 tools across 35 API groups.
+MCP server exposing Domo internal APIs as tools. 526 tools across 35 API groups.
 
 ## Requirements
 
@@ -91,27 +91,27 @@ The server uses stdio transport (standard for MCP clients). No port binding requ
 |---|--------|-------|
 | 01 | accounts | 19 |
 | 02 | achievements | 8 |
-| 03 | admin | 20 |
+| 03 | admin | 16 |
 | 04 | ai_data_science | 46 |
 | 05 | alerts | 15 |
 | 06 | appdb | 23 |
 | 07 | approvals | 7 |
 | 08 | app_studio | 13 |
 | 09 | brand_kit | 5 |
-| 10 | bricks | 17 |
+| 10 | bricks | 15 |
 | 11 | cards | 32 |
 | 12 | categories | 5 |
 | 13 | certification | 11 |
 | 14 | code_engine | 9 |
 | 15 | credits | 3 |
-| 16 | dataflows | 28 |
-| 17 | datasets | 65 |
+| 16 | dataflows | 27 |
+| 17 | datasets | 58 |
 | 18 | domo_everywhere | 13 |
 | 19 | elevation | 3 |
 | 20 | files | 7 |
 | 21 | filesets | 19 |
 | 22 | forms | 6 |
-| 23 | functions | 11 |
+| 23 | functions | 9 |
 | 24 | groups | 11 |
 | 25 | left_navigation | 3 |
 | 26 | objectives | 25 |
@@ -124,4 +124,4 @@ The server uses stdio transport (standard for MCP clients). No port binding requ
 | 33 | task_center | 13 |
 | 34 | toolkit | 8 |
 | 35 | users | 16 |
-| | **Total** | **542** |
+| | **Total** | **526** |
