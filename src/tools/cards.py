@@ -158,19 +158,25 @@ def cards_get_definition_for_update(
     dynamic_text: Annotated[bool | None, "Include dynamic text definitions"] = None,
     variables: Annotated[bool | None, "Include variable definitions"] = None,
 ) -> Any:
-    """Get a card's full definition. Returns an array where result[0] contains:
-    - subscriptions: LIST of objects with {cardId, dataSourceId, componentName, subscription: {...}}
-    - metadataOverrides.components: LIST of {component, chartType, overrides, goal}
+    """Get a card's full definition. Response is a dict (not a list) containing:
+    - definition.subscriptions: DICT keyed by component name, each with dataSourceId injected
+    - definition.charts: DICT keyed by component name
+    - definition.formulas/annotations/conditionalFormats: returned as [] empty arrays
+      — these MUST be converted to object form before passing to cards_update or cards_create
 
     To build a cards_update body from this response:
-      1. Convert subscriptions list → dict keyed by componentName using the inner 'subscription'
-         object, then REMOVE 'dataSourceId' from each subscription (it belongs only in dataProvider)
-      2. Convert metadataOverrides.components list → 'charts' dict keyed by 'component' field
-      3. Wrap in {definition: {subscriptions, charts, formulas, annotations, conditionalFormats,
-         controls, segments, dynamicTitle, dynamicDescription, chartVersion, allowTableDrill,
-         inputTable, modified, title, description}, dataProvider: {dataSourceId}, variables}
+      1. Strip 'dataSourceId' from each subscription (belongs only in dataProvider)
+      2. Convert formulas [] → {"dsUpdated": [], "dsDeleted": [], "card": []}
+         annotations [] → {"new": [], "modified": [], "deleted": []}
+         conditionalFormats [] → {"card": [], "datasource": []}
+      3. Add controls:[] if missing; add dynamicTitle, dynamicDescription if missing
+      4. Wrap as {definition, dataProvider: {dataSourceId}, variables: true}
+      5. segments stays as {active, definitions} for update
 
-    To build a cards_create body: same as above but KEEP 'dataSourceId' inside each subscription.
+    To build a cards_create body:
+      - Apply the same conversions as update
+      - Change segments to {active, create, update, delete} keys — NOT {active, definitions}
+      - dataSourceId: strip from subscriptions (same as update)
     """
     body: dict[str, Any] = {"urn": urn}
     if dynamic_text is not None:
@@ -203,18 +209,31 @@ def cards_create(
     body: Annotated[
         dict[str, Any],
         (
-            "Card creation body. Shape: {definition, dataProvider, variables?}. "
-            "definition.subscriptions is a DICT keyed by component name (e.g. 'main', 'big_number'). "
-            "Each subscription object MUST include 'dataSourceId' directly alongside its other fields "
-            "(name, columns, filters, orderBy, groupBy, fiscal, projection, distinct, etc.). "
-            "definition.charts is a DICT keyed by component name: "
-            "{main: {component, chartType, overrides, goal}}. "
-            "Other definition keys: formulas {dsUpdated,dsDeleted,card}, annotations {new,modified,deleted}, "
-            "conditionalFormats {card,datasource}, controls, segments {active,create,update,delete}, "
-            "dynamicTitle {text:[{type,text}]}, dynamicDescription {text,displayOnCardDetails}, "
-            "chartVersion, allowTableDrill, inputTable, modified (epoch ms), title, description. "
+            "Card creation body. Shape: {definition, dataProvider, variables}. "
+            "TOP-LEVEL KEYS — definition (object), dataProvider (object), variables (boolean, default true). "
+            "variables goes at the top level alongside definition, NOT inside definition. "
+            "SUBSCRIPTIONS — definition.subscriptions is a DICT keyed by component name. "
+            "Standard components: 'main' (the chart) and optionally 'big_number' (KPI summary shown above chart). "
+            "Subscription fields: name, columns, filters, orderBy, groupBy, fiscal, projection, distinct. "
+            "'main' supports dateGrain: {column, dateTimeElement} for time-series charts; "
+            "use calendar column names (CalendarMonth, CalendarQuarter, CalendarYear) with calendar:true. "
+            "'big_number' columns use aggregation/alias/format but NOT mapping; add limit:1. "
+            "CRITICAL — dataSourceId belongs ONLY in dataProvider, NOT inside subscriptions for create. "
+            "(Domo injects it into subscriptions automatically after save — do not send it pre-emptively.) "
+            "CHARTS — definition.charts is a DICT keyed by component name: "
+            "{main: {component, chartType, overrides:{}, goal:null}}. "
+            "Always reference 'main' in charts. 'big_number' subscription does NOT need a charts entry. "
+            "FORMAT DIFFERENCES vs cards_update and GET responses — "
+            "formulas: object {dsUpdated:[], dsDeleted:[], card:[]} (NOT an array). "
+            "annotations: object {new:[], modified:[], deleted:[]} (NOT an array). "
+            "conditionalFormats: object {card:[], datasource:[]} (NOT an array). "
+            "segments: object {active:[], create:[], update:[], delete:[]} — "
+            "note 'create/update/delete' keys here vs 'definitions' key in cards_update. "
+            "orderBy entries MUST include 'order' field ('ASCENDING' or 'DESCENDING'). "
+            "Without 'order', the render/preview endpoint returns 500 even though save succeeds. "
+            "OTHER definition keys: dynamicTitle {text:[{type,text}]}, dynamicDescription {text,displayOnCardDetails}, "
+            "chartVersion (use '12'), inputTable (false), title, description. "
             "dataProvider: {dataSourceId: str}. "
-            "NOTE: dataSourceId must appear BOTH in dataProvider AND inside every subscription object. "
             "Available chartType values for definition.charts[component].chartType — "
             "Bar/Column (vertical): badge_vert_bar, badge_vert_multibar, badge_vert_stackedbar, "
             "badge_vert_percentbar, badge_vert_nestedbar, badge_vert_dual_stackedbar, "
@@ -293,9 +312,29 @@ def cards_create(
 ) -> Any:
     """Create a new KPI card.
 
-    Key difference from cards_update: each subscription in definition.subscriptions must contain
-    'dataSourceId'. When converting a cards_get_definition_for_update response, keep 'dataSourceId'
-    inside each subscription object.
+    FORMAT DIFFERENCES — create vs update vs GET:
+
+    CREATE (this tool):
+      - dataSourceId: ONLY in dataProvider, never inside subscriptions
+      - formulas/annotations/conditionalFormats: OBJECTS ({dsUpdated/new/card keys})
+      - segments: {active, create, update, delete}
+      - variables: boolean at top level alongside definition
+      - charts: always include 'main' component; 'big_number' subscription needs no charts entry
+      - orderBy entries MUST have 'order' field (ASCENDING/DESCENDING); omitting it causes 500 on render
+
+    UPDATE (cards_update):
+      - Body shape is IDENTICAL to create: {definition, dataProvider, variables:true}
+      - formulas/annotations/conditionalFormats: MUST be OBJECTS, same as create ([] arrays are rejected)
+      - segments: {active, definitions}  ← different key than create's {active, create, update, delete}
+      - Must also include controls:[], dynamicTitle, dynamicDescription in definition
+      - dataSourceId: ONLY in dataProvider, never inside subscriptions (same as create)
+      - orderBy entries MUST have 'order' field (same rule as create)
+
+    GET (cards_get_definition_for_update):
+      - Returns formulas/annotations/conditionalFormats as [] arrays even though write endpoints require OBJECTS
+      - Must convert these to object form before passing to create or update
+      - Returns subscriptions already as a DICT (not a list) keyed by component name
+      - dataSourceId appears in each returned subscription but must be stripped before update
     """
     return auth.put("/content/v3/cards/kpi", body=body, pageId=page_id, parentUrn=parent_urn)
 
@@ -346,20 +385,29 @@ def cards_update(
     body: Annotated[
         dict[str, Any],
         (
-            "Full card definition to replace. Shape: {definition, dataProvider, variables?}. "
+            "Full card definition to replace. Shape: {definition, dataProvider, variables:true}. "
+            "BODY SHAPE IS IDENTICAL TO cards_create — all the same field requirements apply. "
             "definition.subscriptions is a DICT keyed by component name (e.g. 'main', 'big_number'). "
             "Each subscription object must NOT contain 'dataSourceId' — that belongs only in "
             "dataProvider.dataSourceId at the top level. "
             "Subscription fields: name, columns, filters, orderBy, groupBy, fiscal, projection, "
             "distinct, limit (big_number only), dateGrain (main only). "
+            "orderBy entries MUST include 'order' field ('ASCENDING' or 'DESCENDING'). "
+            "Without 'order', the render/preview endpoint returns 500 even though the update succeeds. "
             "definition.charts is a DICT keyed by component name: "
             "{main: {component, chartType, overrides, goal}}. "
-            "Other definition keys: formulas {dsUpdated,dsDeleted,card}, annotations {new,modified,deleted}, "
-            "conditionalFormats {card,datasource}, controls, segments {active,create,update,delete}, "
-            "dynamicTitle {text:[{type,text}]}, dynamicDescription {text,displayOnCardDetails}, "
+            "Other definition keys: "
+            "formulas: MUST be object {dsUpdated:[], dsDeleted:[], card:[]} — NOT an array. "
+            "annotations: MUST be object {new:[], modified:[], deleted:[]} — NOT an array. "
+            "conditionalFormats: MUST be object {card:[], datasource:[]} — NOT an array. "
+            "controls (list, use []), "
+            "segments {active, definitions} — NOTE: key is 'definitions' here, not 'create/update/delete' as in cards_create. "
+            "dynamicTitle {text:[{text:str, type:'TEXT'}]}, dynamicDescription {text:[], displayOnCardDetails:true}, "
             "chartVersion, allowTableDrill, inputTable, modified (epoch ms), title, description. "
-            "dataProvider: {dataSourceId: str}. "
+            "dataProvider: {dataSourceId: str}. variables: true (required at top level). "
             "NOTE: dataSourceId must appear ONLY in dataProvider, not inside subscriptions. "
+            "WARNING: cards_get_definition_for_update returns formulas/annotations/conditionalFormats as [] arrays "
+            "— convert them to object form before passing to this tool. "
             "Available chartType values for definition.charts[component].chartType — "
             "Bar/Column (vertical): badge_vert_bar, badge_vert_multibar, badge_vert_stackedbar, "
             "badge_vert_percentbar, badge_vert_nestedbar, badge_vert_dual_stackedbar, "
@@ -436,9 +484,20 @@ def cards_update(
 ) -> Any:
     """Replace a card's full definition.
 
-    Key difference from cards_create: subscription objects in definition.subscriptions must NOT
-    contain 'dataSourceId'. When converting a cards_get_definition_for_update response, strip
-    'dataSourceId' from each inner subscription object before submitting.
+    Body shape is IDENTICAL to cards_create. Key differences from create:
+      - segments: use {active, definitions} — NOT {active, create, update, delete} as in create
+
+    IMPORTANT — cards_get_definition_for_update returns formulas/annotations/conditionalFormats as
+    [] empty arrays. These MUST be converted to object form before calling this tool:
+      - formulas: {"dsUpdated": [], "dsDeleted": [], "card": []}
+      - annotations: {"new": [], "modified": [], "deleted": []}
+      - conditionalFormats: {"card": [], "datasource": []}
+
+    When converting a cards_get_definition_for_update response:
+      1. Subscriptions are already returned as a dict — no list conversion needed
+      2. Strip 'dataSourceId' from each subscription (it belongs only in dataProvider)
+      3. Convert formulas/annotations/conditionalFormats from [] to object form (see above)
+      4. Add controls:[], dynamicTitle, dynamicDescription if not present
     """
     return auth.put(f"/content/v3/cards/kpi/{card_id}", body=body)
 
