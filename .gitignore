@@ -1,6 +1,5 @@
 CLAUDE.md
 examples/
-api-definitions-md/
 __pycache__/
 *.pyc
 *.pyo
