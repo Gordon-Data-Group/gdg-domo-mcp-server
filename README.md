@@ -1,5 +1,7 @@
 # Domo MCP Server
 
+> **Alpha Release (v0.0.1)** — This project is in early development. APIs, tool signatures, and behavior may change without notice.
+
 MCP server exposing Domo internal APIs as tools. 526 tools across 35 API groups.
 
 ## Requirements
@@ -73,6 +75,8 @@ Add to `.mcp.json` (project) or `~/.claude/mcp.json` (global):
   }
 }
 ```
+
+---
 
 ## Architecture
 
