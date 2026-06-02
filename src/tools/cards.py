@@ -158,19 +158,25 @@ def cards_get_definition_for_update(
     dynamic_text: Annotated[bool | None, "Include dynamic text definitions"] = None,
     variables: Annotated[bool | None, "Include variable definitions"] = None,
 ) -> Any:
-    """Get a card's full definition. Returns an array where result[0] contains:
-    - subscriptions: LIST of objects with {cardId, dataSourceId, componentName, subscription: {...}}
-    - metadataOverrides.components: LIST of {component, chartType, overrides, goal}
+    """Get a card's full definition. Response is a dict (not a list) containing:
+    - definition.subscriptions: DICT keyed by component name, each with dataSourceId injected
+    - definition.charts: DICT keyed by component name
+    - definition.formulas/annotations/conditionalFormats: returned as [] empty arrays
+      — these MUST be converted to object form before passing to cards_update or cards_create
 
     To build a cards_update body from this response:
-      1. Convert subscriptions list → dict keyed by componentName using the inner 'subscription'
-         object, then REMOVE 'dataSourceId' from each subscription (it belongs only in dataProvider)
-      2. Convert metadataOverrides.components list → 'charts' dict keyed by 'component' field
-      3. Wrap in {definition: {subscriptions, charts, formulas, annotations, conditionalFormats,
-         controls, segments, dynamicTitle, dynamicDescription, chartVersion, allowTableDrill,
-         inputTable, modified, title, description}, dataProvider: {dataSourceId}, variables}
+      1. Strip 'dataSourceId' from each subscription (belongs only in dataProvider)
+      2. Convert formulas [] → {"dsUpdated": [], "dsDeleted": [], "card": []}
+         annotations [] → {"new": [], "modified": [], "deleted": []}
+         conditionalFormats [] → {"card": [], "datasource": []}
+      3. Add controls:[] if missing; add dynamicTitle, dynamicDescription if missing
+      4. Wrap as {definition, dataProvider: {dataSourceId}, variables: true}
+      5. segments stays as {active, definitions} for update
 
-    To build a cards_create body: same as above but KEEP 'dataSourceId' inside each subscription.
+    To build a cards_create body:
+      - Apply the same conversions as update
+      - Change segments to {active, create, update, delete} keys — NOT {active, definitions}
+      - dataSourceId: strip from subscriptions (same as update)
     """
     body: dict[str, Any] = {"urn": urn}
     if dynamic_text is not None:
@@ -203,101 +209,175 @@ def cards_create(
     body: Annotated[
         dict[str, Any],
         (
-            "Card creation body. Shape: {definition, dataProvider, variables?}. "
-            "definition.subscriptions is a DICT keyed by component name (e.g. 'main', 'big_number'). "
-            "Each subscription object MUST include 'dataSourceId' directly alongside its other fields "
-            "(name, columns, filters, orderBy, groupBy, fiscal, projection, distinct, etc.). "
-            "definition.charts is a DICT keyed by component name: "
-            "{main: {component, chartType, overrides, goal}}. "
-            "Other definition keys: formulas {dsUpdated,dsDeleted,card}, annotations {new,modified,deleted}, "
-            "conditionalFormats {card,datasource}, controls, segments {active,create,update,delete}, "
-            "dynamicTitle {text:[{type,text}]}, dynamicDescription {text,displayOnCardDetails}, "
-            "chartVersion, allowTableDrill, inputTable, modified (epoch ms), title, description. "
+            "Card creation body. Shape: {definition, dataProvider, variables}. "
+            "TOP-LEVEL KEYS — definition (object), dataProvider (object), variables (boolean, default true). "
+            "variables goes at the top level alongside definition, NOT inside definition. "
+            "SUBSCRIPTIONS — definition.subscriptions is a DICT keyed by component name. "
+            "Standard component is 'main' (the chart). Each subscription MUST have a 'name' field. "
+            "Subscription fields: name, columns, filters, orderBy, groupBy, fiscal, projection, distinct. "
+            "COLUMN FORMAT — columns is a list of dicts: [{column, mapping}, ...]. "
+            "Use mapping='ITEM' for dimension/category columns (x-axis), mapping='VALUE' for metric columns (y-axis). "
+            "Do NOT include an 'aggregation' key — this silently breaks subscription parsing. "
+            "Domo aggregates metric columns implicitly based on groupBy. "
+            "groupBy MUST be a list of OBJECTS: [{column: 'col_name'}] — NOT a list of strings. "
+            "Using strings causes 'missing main subscription' error with no further detail. "
+            "KPI HEADLINE NUMBERS — use chart type badge_singlevalue with main subscription only. "
+            "Set groupBy:[] and one VALUE column; Domo shows the aggregated total. "
+            "Do NOT use the big_number subscription — it requires formulaId referencing a beast mode, "
+            "and the functions_create API is unreliable for dataset-linked formulas. "
+            "TIME-SERIES — add dateGrain:{column:'date_col', dateTimeElement:'MONTH'} to the subscription "
+            "and groupBy:[{column:'date_col'}]; Domo auto-aggregates by the chosen grain. "
+            "CRITICAL — dataSourceId belongs ONLY in dataProvider, NOT inside subscriptions for create. "
+            "(Domo injects it into subscriptions automatically after save — do not send it pre-emptively.) "
+            "CHARTS — definition.charts is a DICT keyed by component name: "
+            "{main: {component, chartType, overrides:{}, goal:null}}. "
+            "CHART COLORS — set series colors via overrides keys in charts.main.overrides: "
+            "series_1_color, series_2_color, series_3_color, etc. "
+            "Value is a hex color WITHOUT the '#' prefix (e.g. 'F4B73F' not '#F4B73F'). "
+            "FORMAT DIFFERENCES vs cards_update and GET responses — "
+            "formulas: object {dsUpdated:[], dsDeleted:[], card:[]} (NOT an array). "
+            "annotations: object {new:[], modified:[], deleted:[]} (NOT an array). "
+            "conditionalFormats: object {card:[], datasource:[]} (NOT an array). "
+            "segments: object {active:[], definitions:[]} for BOTH create and update. "
+            "orderBy entries MUST include 'order' field ('ASCENDING' or 'DESCENDING'). "
+            "Without 'order', the render/preview endpoint returns 500 even though save succeeds. "
+            "OTHER definition keys: dynamicTitle {text:[{type,text}]}, dynamicDescription {text,displayOnCardDetails}, "
+            "chartVersion (use '12'), inputTable (false), title, description. "
             "dataProvider: {dataSourceId: str}. "
-            "NOTE: dataSourceId must appear BOTH in dataProvider AND inside every subscription object. "
-            "Available chartType values for definition.charts[component].chartType — "
-            "Bar/Column (vertical): badge_vert_bar, badge_vert_multibar, badge_vert_stackedbar, "
-            "badge_vert_percentbar, badge_vert_nestedbar, badge_vert_dual_stackedbar, "
-            "badge_vert_facetedbar, badge_vert_histogram, badge_vert_marimekko, badge_vert_rtbar, "
-            "badge_vert_rtmultibar, badge_vert_rtstackedbar, badge_vert_waterfall, badge_vert_bullet. "
-            "Bar (horizontal): badge_horiz_bar, badge_horiz_multibar, badge_horiz_stackedbar, "
-            "badge_horiz_percentbar, badge_horiz_nestedbar, badge_horiz_dual_stackedbar, "
-            "badge_horiz_facetedbar, badge_horiz_histogram, badge_horiz_marimekko, badge_horiz_rtbar, "
-            "badge_horiz_rtmultibar, badge_horiz_rtstackedbar, badge_horiz_waterfall, badge_horiz_bullet. "
-            "Line: badge_trendline, badge_two_trendline, badge_curvedline, badge_stepline, "
-            "badge_symbolline, badge_curved_symbolline, badge_rttrendline, badge_curved_rttrendline, "
-            "badge_horiz_trendline, badge_horiz_curvedline, badge_horiz_stepline, badge_horiz_symbolline, "
-            "badge_horiz_curved_symbolline, badge_curved_rt_symbolline, badge_curved_rttrendline, "
-            "badge_variance_line, badge_xy_line, badge_spark_line, badge_slope. "
-            "Combo (bar+line): badge_line_bar, badge_line_clusterbar, badge_line_stackedbar, "
-            "badge_vert_bar_line, badge_vert_bar_overlay, badge_horiz_bar_line, badge_horiz_bar_overlay, "
-            "badge_curved_line_bar, badge_curved_line_stackedbar, badge_horiz_line_bar, "
-            "badge_horiz_line_clusterbar, badge_horiz_line_stackedbar, badge_vert_nested_linebar, "
-            "badge_horiz_nested_linebar. "
-            "Area: badge_stream, badge_stackedtrend, badge_horiz_stackedtrend, badge_vert_area_overlay, "
-            "badge_horiz_area_overlay, badge_vert_curved_stacked_area, badge_horiz_curved_stacked_area, "
-            "badge_vert_step_area_overlay, badge_horiz_step_area_overlay, badge_vert_curved_area_overlay, "
-            "badge_horiz_curved_area_overlay. "
-            "Scatter/Bubble/Dot: badge_xyscatterplot, badge_xyscatterplot_basic, badge_xybubble, "
-            "badge_bubble, badge_packed_bubble, badge_category_scatter, badge_symbol_bar, "
-            "badge_symbol_stackedbar, badge_horiz_symbol, badge_horiz_symbol_bar, "
-            "badge_horiz_symbol_stackedbar, badge_horiz_symbol_overlay, badge_vert_symbol, "
-            "badge_vert_symbol_overlay, badge_vert_dotplot_overlay, badge_horiz_dotplot_overlay, "
-            "badge_vert_multi_dotplot, badge_horiz_multi_dotplot, badge_vert_stacked_dotplot, "
-            "badge_horiz_stacked_dotplot, badge_vert_line_multi_dotplot, badge_horiz_line_multi_dotplot, "
-            "badge_vert_line_stacked_dotplot, badge_horiz_line_stacked_dotplot. "
-            "Pie/Donut/Circular: badge_pie, badge_donut, badge_nautilus, badge_nautilus_donut, "
-            "badge_nightingale_rose, badge_sunburst, badge_waffle, badge_radar, badge_sankey, "
-            "badge_sankey_path, badge_sankey_circular, badge_stream_funnel. "
-            "Funnel: badge_funnel, badge_funnel_bars, badge_funnel_swing. "
-            "Gauges/Progress: badge_gauge, badge_filledgauge, badge_compfillgauge_basic, "
-            "badge_compfillgauge_adv, badge_facegauge, badge_imagegauge, badge_shapegauge, "
-            "badge_compgauge, badge_in_range_gauge, badge_radial_progress, badge_multi_radial_progress, "
-            "badge_progressbar, badge_bullet, badge_horiz_boxplot, badge_vert_boxplot. "
-            "Single Value/KPI: badge_singlevalue, badge_multi_value, badge_multi_value_cols, "
-            "badge_summary_comparison, badge_summary_num_text, badge_summary_time_comparison, "
-            "badge_spark_bar, badge_highlow, badge_horiz_highlow, badge_pareto, badge_bump, "
-            "badge_stock_candlestick, badge_risk_heatmap. "
-            "Period-over-Period: badge_pop_trendline, badge_pop_trendline_var, badge_pop_bar_line, "
-            "badge_pop_bar_line_var, badge_pop_line_bar, badge_pop_line_bar_var, badge_pop_multi_value, "
-            "badge_pop_vert_multibar, badge_pop_filledgauge, badge_pop_progressbar, badge_pop_rttrendline, "
-            "badge_pop_shapegauge, badge_pop_table, badge_pop_flex_table, badge_pop_trendline_play, "
-            "badge_pop_vert_bar_play, badge_pop_pie_play, badge_pop_donut_play. "
-            "Tables: badge_table, badge_basic_table, badge_flex_table, badge_pivot_table, "
-            "badge_heatmap_table. "
-            "Maps: badge_world_map, badge_world, badge_map, badge_map_us_state, badge_map_us_county, "
-            "badge_map_latlong, badge_map_latlong_route, badge_map_custom, badge_map_africa, "
-            "badge_map_asia, badge_map_australia, badge_map_austria, badge_map_brazil, badge_map_canada, "
-            "badge_map_chile, badge_map_china, badge_map_europe, badge_map_france, "
-            "badge_map_france_dept, badge_map_germany, badge_map_ghana, badge_map_india, "
-            "badge_map_indonesia, badge_map_italy, badge_map_japan, badge_map_malaysia, "
-            "badge_map_mexico, badge_map_middle_east, badge_map_new_zealand, badge_map_nigeria, "
-            "badge_map_north_america, badge_map_panama, badge_map_peru, badge_map_philippines, "
-            "badge_map_portugal, badge_map_south_america, badge_map_south_korea, badge_map_spain, "
-            "badge_map_switzerland, badge_map_uae, badge_map_uk_area, badge_map_uk_postal, "
-            "badge_map_united_kingdom. "
-            "Heatmap/Calendar/Gantt: badge_heatmap, badge_calendar, badge_calendar_entry, "
-            "badge_category_calendar, badge_gantt, badge_gantt_dep, badge_gantt_percent, "
-            "badge_treemap, badge_word_cloud. "
-            "Data Science: badge_ds_forecasting, badge_ds_outliers, badge_ds_pred_modeling, "
-            "badge_ds_spc, badge_ds_percentile, badge_ds_percentile_dist, badge_confusion_matrix, "
-            "badge_correlation_matrix. "
-            "Selectors/Filters: badge_slicer, badge_dropdown_selector, badge_checkbox_selector, "
-            "badge_radio_selector, badge_date_selector, badge_range_selector, badge_slider_selector, "
-            "badge_buttons. "
-            "Text/Content: badge_textbox, badge_dynamic_textbox, badge_text_entry."
+            "Available chartType values for definition.charts[component].chartType "
+            "(sourced from Domo card builder UI — verified exhaustive list) — "
+            "Vertical bar: badge_vert_stackedbar, badge_vert_multibar, badge_vert_100pct, "
+            "badge_vert_nestedbar, badge_vert_bullet, badge_vert_percentbar, badge_vert_waterfall, "
+            "badge_vert_dual_stackedbar, badge_vert_rtbar, badge_vert_rtmultibar, badge_vert_rtstackedbar, "
+            "badge_vert_histogram, badge_vert_marimekko, badge_vert_bar_line, badge_vert_nested_linebar, "
+            "badge_vert_100pct_linebar, badge_vert_bar_overlay, badge_vert_facetedbar, "
+            "badge_line_bar, badge_line_stackedbar, badge_line_clusterbar, "
+            "badge_symbol_bar, badge_symbol_stackedbar, "
+            "badge_curved_line_bar, badge_curved_line_stackedbar, badge_pareto. "
+            "Horizontal bar: badge_horiz_stackedbar, badge_horiz_multibar, badge_horiz_100pct, "
+            "badge_horiz_nestedbar, badge_bullet, badge_horiz_percentbar, badge_horiz_waterfall, "
+            "badge_horiz_dual_stackedbar, badge_horiz_histogram, badge_horiz_marimekko, "
+            "badge_horiz_rtbar, badge_horiz_rtstackedbar, badge_horiz_rtmultibar, "
+            "badge_horiz_line_bar, badge_horiz_line_clusterbar, badge_horiz_line_stackedbar, "
+            "badge_horiz_nested_linebar, badge_horiz_symbol_bar, badge_horiz_symbol_stackedbar, "
+            "badge_horiz_bar_line, badge_horiz_100pct_linebar, badge_horiz_bar_overlay, "
+            "badge_horiz_facetedbar, "
+            "badge_gantt, badge_gantt_percent, badge_gantt_dep. "
+            "Line: badge_two_trendline, badge_curvedline, badge_stepline, badge_symbolline, "
+            "badge_curved_symbolline, badge_rttrendline, badge_variance_line, badge_bump, badge_slope, "
+            "badge_horiz_trendline, badge_horiz_curvedline, badge_horiz_stepline, "
+            "badge_horiz_symbolline, badge_horiz_curved_symbolline. "
+            "Lollipop: badge_vert_multi_dotplot, badge_vert_stacked_dotplot, "
+            "badge_vert_line_multi_dotplot, badge_vert_line_stacked_dotplot, badge_vert_dotplot_overlay, "
+            "badge_horiz_multi_dotplot, badge_horiz_stacked_dotplot, badge_horiz_line_multi_dotplot, "
+            "badge_horiz_line_stacked_dotplot, badge_horiz_dotplot_overlay. "
+            "Area: badge_stackedtrend, badge_vert_100pct_area, badge_vert_area_overlay, "
+            "badge_vert_curved_stacked_area, badge_vert_curved_100pct_area, badge_vert_curved_area_overlay, "
+            "badge_vert_step_stacked_area, badge_vert_step_100pct_area, badge_vert_step_area_overlay, "
+            "badge_stream, badge_horiz_stackedtrend, badge_horiz_100pct_area, badge_horiz_area_overlay, "
+            "badge_horiz_curved_stacked_area, badge_horiz_curved_100pct_area, badge_horiz_curved_area_overlay, "
+            "badge_horiz_step_stacked_area, badge_horiz_step_100pct_area, badge_horiz_step_area_overlay. "
+            "Scatter/Statistical: badge_xybubble, badge_xy_line, badge_category_scatter, "
+            "badge_horiz_boxplot, badge_vert_boxplot, badge_packed_bubble, "
+            "badge_ds_pred_modeling, badge_ds_forecasting, badge_ds_outliers, badge_ds_spc, "
+            "badge_correlation_matrix, badge_confusion_matrix. "
+            "Pie/Part-to-whole: badge_pie, badge_donut, badge_treemap, "
+            "badge_funnel, badge_funnel_swing, badge_funnel_bars, "
+            "badge_nautilus, badge_nautilus_donut, badge_nightingale_rose, badge_stream_funnel. "
+            "Maps: badge_world_map, badge_map (US), badge_map_us_state, badge_map_us_county, "
+            "badge_map_latlong, badge_map_latlong_route, "
+            "badge_map_africa, badge_map_asia, badge_map_australia, badge_map_europe, "
+            "badge_map_north_america, badge_map_south_america, badge_map_middle_east, "
+            "badge_map_austria, badge_map_brazil, badge_map_canada, badge_map_chile, badge_map_china, "
+            "badge_map_france2016, badge_map_france_dept, badge_map_france, badge_map_germany, "
+            "badge_map_ghana, badge_map_india, badge_map_indonesia, badge_map_italy, badge_map_japan, "
+            "badge_map_malaysia, badge_map_mexico, badge_map_new_zealand, badge_map_nigeria, "
+            "badge_map_panama, badge_map_peru, badge_map_philippines, badge_map_portugal, "
+            "badge_map_south_korea, badge_map_spain, badge_map_switzerland, badge_map_uae, "
+            "badge_map_united_kingdom, badge_map_uk_area, badge_map_uk_postal, "
+            "badge_map_custom (custom uploaded maps — map selected by map ID not chart type). "
+            "Gauges/KPI: badge_gauge, badge_filledgauge, badge_facegauge, badge_shapegauge, "
+            "badge_singlevalue, badge_multi_value, badge_multi_value_cols, "
+            "badge_progressbar, badge_compgauge, badge_compfillgauge_basic, badge_compfillgauge_adv, "
+            "badge_radial_progress, badge_multi_radial_progress, badge_waffle, "
+            "badge_in_range_gauge, badge_imagegauge. "
+            "Tables: badge_basic_table, badge_pivot_table, badge_heatmap_table, badge_flex_table, "
+            "badge_textbox, badge_dynamic_textbox, badge_table. "
+            "Selectors: badge_slicer, badge_date_selector, badge_checkbox_selector, "
+            "badge_radio_selector, badge_range_selector, badge_dropdown_selector. "
+            "Period-over-Period: badge_pop_bar_line, badge_pop_bar_line_var, badge_pop_line_bar, "
+            "badge_pop_line_bar_var, badge_pop_trendline, badge_pop_trendline_var, "
+            "badge_pop_vert_multibar, badge_pop_rttrendline, badge_pop_multi_value, "
+            "badge_pop_shapegauge, badge_pop_flex_table, badge_pop_filledgauge, badge_pop_progressbar. "
+            "Other/Specialty: badge_heatmap, badge_calendar, "
+            "badge_word_cloud, badge_stock_candlestick, badge_highlow, badge_horiz_highlow, "
+            "badge_horiz_symbol, badge_vert_symbol, badge_horiz_symbol_overlay, badge_vert_symbol_overlay, "
+            "badge_radar, badge_spark_line, badge_spark_bar, badge_sunburst, "
+            "badge_sankey, badge_sankey_circular, badge_sankey_path, "
+            "badge_risk_heatmap, badge_packed_bubble."
         ),
     ],
-    page_id: Annotated[str | None, "Page ID to add the card to after creation"] = None,
-    parent_urn: Annotated[str | None, "Parent card URN for drill-path cards"] = None,
 ) -> Any:
     """Create a new KPI card.
 
-    Key difference from cards_update: each subscription in definition.subscriptions must contain
-    'dataSourceId'. When converting a cards_get_definition_for_update response, keep 'dataSourceId'
-    inside each subscription object.
+    FORMAT DIFFERENCES — create vs update vs GET:
+
+    CREATE (this tool):
+      - dataSourceId: ONLY in dataProvider, never inside subscriptions
+      - formulas/annotations/conditionalFormats: OBJECTS ({dsUpdated/new/card keys})
+      - segments: {active, definitions}  ← same for both create AND update
+      - variables: boolean at top level alongside definition
+      - orderBy entries MUST have 'order' field (ASCENDING/DESCENDING); omitting it causes 500 on render
+      - groupBy: list of OBJECTS [{column: '...'}], NOT list of strings — strings break parsing silently
+      - column entries: {column, mapping} only — no 'aggregation' key (breaks parsing silently)
+      - For KPI headline numbers: use badge_singlevalue chart type with main-only subscription
+        (big_number subscription requires beast mode formulaIds; avoid it)
+
+    PAGE ASSOCIATION: do NOT try to pass pageId here — the query-param form returns 400.
+      After creating, add the card to a page with cards_bulk_add_to_pages, then position it
+      via pages_create_writelock → pages_update_layout → pages_delete_writelock.
+
+    UPDATE (cards_update):
+      - Body shape is IDENTICAL to create: {definition, dataProvider, variables:true}
+      - formulas/annotations/conditionalFormats: MUST be OBJECTS, same as create ([] arrays are rejected)
+      - segments: {active, definitions}  ← same as create
+      - Must also include controls:[], dynamicTitle, dynamicDescription in definition
+      - dataSourceId: ONLY in dataProvider, never inside subscriptions (same as create)
+      - orderBy entries MUST have 'order' field (same rule as create)
+
+    GET (cards_get_definition_for_update):
+      - Returns formulas/annotations/conditionalFormats as [] arrays even though write endpoints require OBJECTS
+      - Must convert these to object form before passing to create or update
+      - Returns subscriptions already as a DICT (not a list) keyed by component name
+      - dataSourceId appears in each returned subscription but must be stripped before update
     """
-    return auth.put("/content/v3/cards/kpi", body=body, pageId=page_id, parentUrn=parent_urn)
+    return auth.put("/content/v3/cards/kpi", body=body)
+
+
+@mcp.tool()
+def cards_create_notebook(
+    title: Annotated[str, "Card title (shown in the page layout card list)"],
+    page_id: Annotated[int, "Page ID to place the notebook card on"],
+    content: Annotated[str, "HTML content to render inside the card"],
+) -> Any:
+    """Create a notebook (rich-text / section-header) card on a page.
+
+    Uses POST /content/v1/cards/notebook — a separate endpoint from the KPI card endpoint.
+    The returned card still appears as type 'CARD' in page layout content arrays.
+
+    Typical use: styled section dividers between dashboard sections. Example content:
+      '<div style="background:#131211;padding:14px 20px;border-left:5px solid #F4B73F;">'
+      '<p style="color:#F4B73F;margin:0;font-size:18px;font-weight:700;">Section Title</p>'
+      '<p style="color:#9a9a9a;margin:0;font-size:13px;">Subtitle text</p></div>'
+
+    After creation the card is already associated with the page. Position it via
+    pages_create_writelock → pages_update_layout → pages_delete_writelock.
+    """
+    return auth.post("/content/v1/cards/notebook", body={
+        "title": title,
+        "pageId": page_id,
+        "content": content,
+    })
 
 
 @mcp.tool()
@@ -346,99 +426,124 @@ def cards_update(
     body: Annotated[
         dict[str, Any],
         (
-            "Full card definition to replace. Shape: {definition, dataProvider, variables?}. "
+            "Full card definition to replace. Shape: {definition, dataProvider, variables:true}. "
+            "BODY SHAPE IS IDENTICAL TO cards_create — all the same field requirements apply. "
             "definition.subscriptions is a DICT keyed by component name (e.g. 'main', 'big_number'). "
             "Each subscription object must NOT contain 'dataSourceId' — that belongs only in "
             "dataProvider.dataSourceId at the top level. "
             "Subscription fields: name, columns, filters, orderBy, groupBy, fiscal, projection, "
             "distinct, limit (big_number only), dateGrain (main only). "
+            "orderBy entries MUST include 'order' field ('ASCENDING' or 'DESCENDING'). "
+            "Without 'order', the render/preview endpoint returns 500 even though the update succeeds. "
             "definition.charts is a DICT keyed by component name: "
             "{main: {component, chartType, overrides, goal}}. "
-            "Other definition keys: formulas {dsUpdated,dsDeleted,card}, annotations {new,modified,deleted}, "
-            "conditionalFormats {card,datasource}, controls, segments {active,create,update,delete}, "
-            "dynamicTitle {text:[{type,text}]}, dynamicDescription {text,displayOnCardDetails}, "
+            "CHART COLORS — set series colors via overrides keys in charts.main.overrides: "
+            "series_1_color, series_2_color, series_3_color, etc. "
+            "Value is hex WITHOUT '#' prefix (e.g. 'F4B73F' not '#F4B73F'). "
+            "Single-series charts: set series_1_color only. "
+            "Multi-series charts (stacked bar, etc.): set each series individually. "
+            "Other definition keys: "
+            "formulas: MUST be object {dsUpdated:[], dsDeleted:[], card:[]} — NOT an array. "
+            "annotations: MUST be object {new:[], modified:[], deleted:[]} — NOT an array. "
+            "conditionalFormats: MUST be object {card:[], datasource:[]} — NOT an array. "
+            "controls (list, use []), "
+            "segments {active, definitions} — NOTE: key is 'definitions' here, not 'create/update/delete' as in cards_create. "
+            "dynamicTitle {text:[{text:str, type:'TEXT'}]}, dynamicDescription {text:[], displayOnCardDetails:true}, "
             "chartVersion, allowTableDrill, inputTable, modified (epoch ms), title, description. "
-            "dataProvider: {dataSourceId: str}. "
+            "dataProvider: {dataSourceId: str}. variables: true (required at top level). "
             "NOTE: dataSourceId must appear ONLY in dataProvider, not inside subscriptions. "
-            "Available chartType values for definition.charts[component].chartType — "
-            "Bar/Column (vertical): badge_vert_bar, badge_vert_multibar, badge_vert_stackedbar, "
-            "badge_vert_percentbar, badge_vert_nestedbar, badge_vert_dual_stackedbar, "
-            "badge_vert_facetedbar, badge_vert_histogram, badge_vert_marimekko, badge_vert_rtbar, "
-            "badge_vert_rtmultibar, badge_vert_rtstackedbar, badge_vert_waterfall, badge_vert_bullet. "
-            "Bar (horizontal): badge_horiz_bar, badge_horiz_multibar, badge_horiz_stackedbar, "
-            "badge_horiz_percentbar, badge_horiz_nestedbar, badge_horiz_dual_stackedbar, "
-            "badge_horiz_facetedbar, badge_horiz_histogram, badge_horiz_marimekko, badge_horiz_rtbar, "
-            "badge_horiz_rtmultibar, badge_horiz_rtstackedbar, badge_horiz_waterfall, badge_horiz_bullet. "
-            "Line: badge_trendline, badge_two_trendline, badge_curvedline, badge_stepline, "
-            "badge_symbolline, badge_curved_symbolline, badge_rttrendline, badge_curved_rttrendline, "
-            "badge_horiz_trendline, badge_horiz_curvedline, badge_horiz_stepline, badge_horiz_symbolline, "
-            "badge_horiz_curved_symbolline, badge_curved_rt_symbolline, badge_curved_rttrendline, "
-            "badge_variance_line, badge_xy_line, badge_spark_line, badge_slope. "
-            "Combo (bar+line): badge_line_bar, badge_line_clusterbar, badge_line_stackedbar, "
-            "badge_vert_bar_line, badge_vert_bar_overlay, badge_horiz_bar_line, badge_horiz_bar_overlay, "
-            "badge_curved_line_bar, badge_curved_line_stackedbar, badge_horiz_line_bar, "
-            "badge_horiz_line_clusterbar, badge_horiz_line_stackedbar, badge_vert_nested_linebar, "
-            "badge_horiz_nested_linebar. "
-            "Area: badge_stream, badge_stackedtrend, badge_horiz_stackedtrend, badge_vert_area_overlay, "
-            "badge_horiz_area_overlay, badge_vert_curved_stacked_area, badge_horiz_curved_stacked_area, "
-            "badge_vert_step_area_overlay, badge_horiz_step_area_overlay, badge_vert_curved_area_overlay, "
-            "badge_horiz_curved_area_overlay. "
-            "Scatter/Bubble/Dot: badge_xyscatterplot, badge_xyscatterplot_basic, badge_xybubble, "
-            "badge_bubble, badge_packed_bubble, badge_category_scatter, badge_symbol_bar, "
-            "badge_symbol_stackedbar, badge_horiz_symbol, badge_horiz_symbol_bar, "
-            "badge_horiz_symbol_stackedbar, badge_horiz_symbol_overlay, badge_vert_symbol, "
-            "badge_vert_symbol_overlay, badge_vert_dotplot_overlay, badge_horiz_dotplot_overlay, "
-            "badge_vert_multi_dotplot, badge_horiz_multi_dotplot, badge_vert_stacked_dotplot, "
-            "badge_horiz_stacked_dotplot, badge_vert_line_multi_dotplot, badge_horiz_line_multi_dotplot, "
-            "badge_vert_line_stacked_dotplot, badge_horiz_line_stacked_dotplot. "
-            "Pie/Donut/Circular: badge_pie, badge_donut, badge_nautilus, badge_nautilus_donut, "
-            "badge_nightingale_rose, badge_sunburst, badge_waffle, badge_radar, badge_sankey, "
-            "badge_sankey_path, badge_sankey_circular, badge_stream_funnel. "
-            "Funnel: badge_funnel, badge_funnel_bars, badge_funnel_swing. "
-            "Gauges/Progress: badge_gauge, badge_filledgauge, badge_compfillgauge_basic, "
-            "badge_compfillgauge_adv, badge_facegauge, badge_imagegauge, badge_shapegauge, "
-            "badge_compgauge, badge_in_range_gauge, badge_radial_progress, badge_multi_radial_progress, "
-            "badge_progressbar, badge_bullet, badge_horiz_boxplot, badge_vert_boxplot. "
-            "Single Value/KPI: badge_singlevalue, badge_multi_value, badge_multi_value_cols, "
-            "badge_summary_comparison, badge_summary_num_text, badge_summary_time_comparison, "
-            "badge_spark_bar, badge_highlow, badge_horiz_highlow, badge_pareto, badge_bump, "
-            "badge_stock_candlestick, badge_risk_heatmap. "
-            "Period-over-Period: badge_pop_trendline, badge_pop_trendline_var, badge_pop_bar_line, "
-            "badge_pop_bar_line_var, badge_pop_line_bar, badge_pop_line_bar_var, badge_pop_multi_value, "
-            "badge_pop_vert_multibar, badge_pop_filledgauge, badge_pop_progressbar, badge_pop_rttrendline, "
-            "badge_pop_shapegauge, badge_pop_table, badge_pop_flex_table, badge_pop_trendline_play, "
-            "badge_pop_vert_bar_play, badge_pop_pie_play, badge_pop_donut_play. "
-            "Tables: badge_table, badge_basic_table, badge_flex_table, badge_pivot_table, "
-            "badge_heatmap_table. "
-            "Maps: badge_world_map, badge_world, badge_map, badge_map_us_state, badge_map_us_county, "
-            "badge_map_latlong, badge_map_latlong_route, badge_map_custom, badge_map_africa, "
-            "badge_map_asia, badge_map_australia, badge_map_austria, badge_map_brazil, badge_map_canada, "
-            "badge_map_chile, badge_map_china, badge_map_europe, badge_map_france, "
-            "badge_map_france_dept, badge_map_germany, badge_map_ghana, badge_map_india, "
-            "badge_map_indonesia, badge_map_italy, badge_map_japan, badge_map_malaysia, "
-            "badge_map_mexico, badge_map_middle_east, badge_map_new_zealand, badge_map_nigeria, "
-            "badge_map_north_america, badge_map_panama, badge_map_peru, badge_map_philippines, "
-            "badge_map_portugal, badge_map_south_america, badge_map_south_korea, badge_map_spain, "
-            "badge_map_switzerland, badge_map_uae, badge_map_uk_area, badge_map_uk_postal, "
-            "badge_map_united_kingdom. "
-            "Heatmap/Calendar/Gantt: badge_heatmap, badge_calendar, badge_calendar_entry, "
-            "badge_category_calendar, badge_gantt, badge_gantt_dep, badge_gantt_percent, "
-            "badge_treemap, badge_word_cloud. "
-            "Data Science: badge_ds_forecasting, badge_ds_outliers, badge_ds_pred_modeling, "
-            "badge_ds_spc, badge_ds_percentile, badge_ds_percentile_dist, badge_confusion_matrix, "
-            "badge_correlation_matrix. "
-            "Selectors/Filters: badge_slicer, badge_dropdown_selector, badge_checkbox_selector, "
-            "badge_radio_selector, badge_date_selector, badge_range_selector, badge_slider_selector, "
-            "badge_buttons. "
-            "Text/Content: badge_textbox, badge_dynamic_textbox, badge_text_entry."
+            "WARNING: cards_get_definition_for_update returns formulas/annotations/conditionalFormats as [] arrays "
+            "— convert them to object form before passing to this tool. "
+            "Available chartType values for definition.charts[component].chartType "
+            "(sourced from Domo card builder UI — verified exhaustive list) — "
+            "Vertical bar: badge_vert_stackedbar, badge_vert_multibar, badge_vert_100pct, "
+            "badge_vert_nestedbar, badge_vert_bullet, badge_vert_percentbar, badge_vert_waterfall, "
+            "badge_vert_dual_stackedbar, badge_vert_rtbar, badge_vert_rtmultibar, badge_vert_rtstackedbar, "
+            "badge_vert_histogram, badge_vert_marimekko, badge_vert_bar_line, badge_vert_nested_linebar, "
+            "badge_vert_100pct_linebar, badge_vert_bar_overlay, badge_vert_facetedbar, "
+            "badge_line_bar, badge_line_stackedbar, badge_line_clusterbar, "
+            "badge_symbol_bar, badge_symbol_stackedbar, "
+            "badge_curved_line_bar, badge_curved_line_stackedbar, badge_pareto. "
+            "Horizontal bar: badge_horiz_stackedbar, badge_horiz_multibar, badge_horiz_100pct, "
+            "badge_horiz_nestedbar, badge_bullet, badge_horiz_percentbar, badge_horiz_waterfall, "
+            "badge_horiz_dual_stackedbar, badge_horiz_histogram, badge_horiz_marimekko, "
+            "badge_horiz_rtbar, badge_horiz_rtstackedbar, badge_horiz_rtmultibar, "
+            "badge_horiz_line_bar, badge_horiz_line_clusterbar, badge_horiz_line_stackedbar, "
+            "badge_horiz_nested_linebar, badge_horiz_symbol_bar, badge_horiz_symbol_stackedbar, "
+            "badge_horiz_bar_line, badge_horiz_100pct_linebar, badge_horiz_bar_overlay, "
+            "badge_horiz_facetedbar, "
+            "badge_gantt, badge_gantt_percent, badge_gantt_dep. "
+            "Line: badge_two_trendline, badge_curvedline, badge_stepline, badge_symbolline, "
+            "badge_curved_symbolline, badge_rttrendline, badge_variance_line, badge_bump, badge_slope, "
+            "badge_horiz_trendline, badge_horiz_curvedline, badge_horiz_stepline, "
+            "badge_horiz_symbolline, badge_horiz_curved_symbolline. "
+            "Lollipop: badge_vert_multi_dotplot, badge_vert_stacked_dotplot, "
+            "badge_vert_line_multi_dotplot, badge_vert_line_stacked_dotplot, badge_vert_dotplot_overlay, "
+            "badge_horiz_multi_dotplot, badge_horiz_stacked_dotplot, badge_horiz_line_multi_dotplot, "
+            "badge_horiz_line_stacked_dotplot, badge_horiz_dotplot_overlay. "
+            "Area: badge_stackedtrend, badge_vert_100pct_area, badge_vert_area_overlay, "
+            "badge_vert_curved_stacked_area, badge_vert_curved_100pct_area, badge_vert_curved_area_overlay, "
+            "badge_vert_step_stacked_area, badge_vert_step_100pct_area, badge_vert_step_area_overlay, "
+            "badge_stream, badge_horiz_stackedtrend, badge_horiz_100pct_area, badge_horiz_area_overlay, "
+            "badge_horiz_curved_stacked_area, badge_horiz_curved_100pct_area, badge_horiz_curved_area_overlay, "
+            "badge_horiz_step_stacked_area, badge_horiz_step_100pct_area, badge_horiz_step_area_overlay. "
+            "Scatter/Statistical: badge_xybubble, badge_xy_line, badge_category_scatter, "
+            "badge_horiz_boxplot, badge_vert_boxplot, badge_packed_bubble, "
+            "badge_ds_pred_modeling, badge_ds_forecasting, badge_ds_outliers, badge_ds_spc, "
+            "badge_correlation_matrix, badge_confusion_matrix. "
+            "Pie/Part-to-whole: badge_pie, badge_donut, badge_treemap, "
+            "badge_funnel, badge_funnel_swing, badge_funnel_bars, "
+            "badge_nautilus, badge_nautilus_donut, badge_nightingale_rose, badge_stream_funnel. "
+            "Maps: badge_world_map, badge_map (US), badge_map_us_state, badge_map_us_county, "
+            "badge_map_latlong, badge_map_latlong_route, "
+            "badge_map_africa, badge_map_asia, badge_map_australia, badge_map_europe, "
+            "badge_map_north_america, badge_map_south_america, badge_map_middle_east, "
+            "badge_map_austria, badge_map_brazil, badge_map_canada, badge_map_chile, badge_map_china, "
+            "badge_map_france2016, badge_map_france_dept, badge_map_france, badge_map_germany, "
+            "badge_map_ghana, badge_map_india, badge_map_indonesia, badge_map_italy, badge_map_japan, "
+            "badge_map_malaysia, badge_map_mexico, badge_map_new_zealand, badge_map_nigeria, "
+            "badge_map_panama, badge_map_peru, badge_map_philippines, badge_map_portugal, "
+            "badge_map_south_korea, badge_map_spain, badge_map_switzerland, badge_map_uae, "
+            "badge_map_united_kingdom, badge_map_uk_area, badge_map_uk_postal, "
+            "badge_map_custom (custom uploaded maps — map selected by map ID not chart type). "
+            "Gauges/KPI: badge_gauge, badge_filledgauge, badge_facegauge, badge_shapegauge, "
+            "badge_singlevalue, badge_multi_value, badge_multi_value_cols, "
+            "badge_progressbar, badge_compgauge, badge_compfillgauge_basic, badge_compfillgauge_adv, "
+            "badge_radial_progress, badge_multi_radial_progress, badge_waffle, "
+            "badge_in_range_gauge, badge_imagegauge. "
+            "Tables: badge_basic_table, badge_pivot_table, badge_heatmap_table, badge_flex_table, "
+            "badge_textbox, badge_dynamic_textbox, badge_table. "
+            "Selectors: badge_slicer, badge_date_selector, badge_checkbox_selector, "
+            "badge_radio_selector, badge_range_selector, badge_dropdown_selector. "
+            "Period-over-Period: badge_pop_bar_line, badge_pop_bar_line_var, badge_pop_line_bar, "
+            "badge_pop_line_bar_var, badge_pop_trendline, badge_pop_trendline_var, "
+            "badge_pop_vert_multibar, badge_pop_rttrendline, badge_pop_multi_value, "
+            "badge_pop_shapegauge, badge_pop_flex_table, badge_pop_filledgauge, badge_pop_progressbar. "
+            "Other/Specialty: badge_heatmap, badge_calendar, "
+            "badge_word_cloud, badge_stock_candlestick, badge_highlow, badge_horiz_highlow, "
+            "badge_horiz_symbol, badge_vert_symbol, badge_horiz_symbol_overlay, badge_vert_symbol_overlay, "
+            "badge_radar, badge_spark_line, badge_spark_bar, badge_sunburst, "
+            "badge_sankey, badge_sankey_circular, badge_sankey_path, "
+            "badge_risk_heatmap, badge_packed_bubble."
         ),
     ],
 ) -> Any:
     """Replace a card's full definition.
 
-    Key difference from cards_create: subscription objects in definition.subscriptions must NOT
-    contain 'dataSourceId'. When converting a cards_get_definition_for_update response, strip
-    'dataSourceId' from each inner subscription object before submitting.
+    Body shape is IDENTICAL to cards_create. Key differences from create:
+      - segments: use {active, definitions} — NOT {active, create, update, delete} as in create
+
+    IMPORTANT — cards_get_definition_for_update returns formulas/annotations/conditionalFormats as
+    [] empty arrays. These MUST be converted to object form before calling this tool:
+      - formulas: {"dsUpdated": [], "dsDeleted": [], "card": []}
+      - annotations: {"new": [], "modified": [], "deleted": []}
+      - conditionalFormats: {"card": [], "datasource": []}
+
+    When converting a cards_get_definition_for_update response:
+      1. Subscriptions are already returned as a dict — no list conversion needed
+      2. Strip 'dataSourceId' from each subscription (it belongs only in dataProvider)
+      3. Convert formulas/annotations/conditionalFormats from [] to object form (see above)
+      4. Add controls:[], dynamicTitle, dynamicDescription if not present
     """
     return auth.put(f"/content/v3/cards/kpi/{card_id}", body=body)
 
