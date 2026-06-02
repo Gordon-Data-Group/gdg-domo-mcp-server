@@ -110,7 +110,9 @@ def pages_create(
 ) -> Any:
     """Create a new page (dashboard). Always pass has_layout=True so the page gets a v4 layout.
 
-    The response includes a layoutId in the pageLayoutV4 block. Use that ID with
+    NOTE: The create response does NOT include the layoutId. After creating the page, call
+    pages_get_with_cards(page_id, include_v4_page_layouts=True) to retrieve the layoutId from
+    the pageLayoutV4.layoutId field. Use that ID with:
     pages_create_writelock → pages_update_layout → pages_delete_writelock to position cards.
     """
     body: dict[str, Any] = {"title": title}
@@ -276,9 +278,14 @@ def pages_bulk_remove_owners(
 
 @mcp.tool()
 def pages_get_layout(
-    layout_id: Annotated[str, "Layout ID"],
+    layout_id: Annotated[str, "Layout ID — this is the numeric layoutId from pageLayoutV4.layoutId, NOT the page ID"],
 ) -> Any:
-    """Get a page layout by ID."""
+    """Get a page layout by its layout ID (not the page ID).
+
+    IMPORTANT: This endpoint may return empty/no output. Prefer calling
+    pages_get_with_cards(page_id, include_v4_page_layouts=True) instead — it reliably returns
+    the full pageLayoutV4 block including the layoutId, content[], and standard/compact templates.
+    """
     return auth.get(f"/content/v4/pages/layouts/{layout_id}")
 
 
@@ -315,10 +322,13 @@ def pages_update_layout(
             "  type ('STANDARD'), template (list of position objects). "
             "compact (dict): mobile grid — aspectRatio (1.0), width (12), type ('COMPACT'), template (list). "
             "template item keys: contentKey (int, matches a content item), x (int), y (int), "
-            "  width (int), height (int), type (str, e.g. 'CARD'), "
-            "  virtual (bool), virtualAppendix (bool) — set both true for appendix items, "
-            "  children ([] for non-virtual, null for virtual). "
-            "Special template types: PAGE_BREAK (height 0), SEPARATOR, HEADER — always virtual+virtualAppendix."
+            "  width (int), height (int), type (str, e.g. 'CARD'). "
+            "  CRITICAL — virtual/virtualAppendix/children control whether Domo respects your positions: "
+            "  Custom-positioned cards (fixed x/y/width/height): virtual=false, virtualAppendix=false, children=[]. "
+            "  Auto-arranged appendix cards: virtual=true, virtualAppendix=true, children=null. "
+            "  WARNING: if you set virtual=true on ALL items, Domo silently ignores every x/y/width/height "
+            "  value and auto-generates the layout — the request succeeds (200) but positions are wrong. "
+            "Special template types: PAGE_BREAK (height 0), SEPARATOR, HEADER — always virtual=true, virtualAppendix=true, children=null."
         ),
     ],
 ) -> Any:

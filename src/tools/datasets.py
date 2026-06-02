@@ -638,6 +638,130 @@ def datasets_commit_upload(
     )
 
 
+# ── File upload (create PUSH dataset from file) ───────────────────────────────
+
+@mcp.tool()
+def datasets_upload_file(
+    file_path: Annotated[str, "Absolute path to a local CSV or XLSX file"],
+    dataset_name: Annotated[str | None, "Dataset display name. Defaults to the filename stem."] = None,
+) -> Any:
+    """Create a new Domo PUSH dataset from a local CSV or XLSX file and upload all rows.
+
+    Workflow:
+      1. Parse file to infer column schema (names + Domo types)
+      2. Create PUSH dataset via POST /data/v2/datasources
+      3. Convert data to CSV and upload via the 3-step process (create → part → commit)
+      4. Return the created dataset metadata (includes id, name, rowCount, schema, etc.)
+
+    Column types are inferred automatically:
+      int   → LONG      float → DECIMAL
+      date  → DATE      datetime → DATETIME
+      str   → STRING    (CSV files default all columns to STRING)
+
+    XLSX requires openpyxl: pip install openpyxl
+    """
+    import csv
+    import io
+    import pathlib
+    from datetime import date, datetime
+
+    path = pathlib.Path(file_path)
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    name = dataset_name or path.stem
+    suffix = path.suffix.lower()
+
+    # ── 1. Parse file ─────────────────────────────────────────────────────────
+    if suffix in (".xlsx", ".xls"):
+        try:
+            import openpyxl
+        except ImportError:
+            raise ImportError("openpyxl is required for XLSX uploads: pip install openpyxl")
+        wb = openpyxl.load_workbook(str(path), data_only=True)
+        ws = wb.active
+        all_rows = list(ws.iter_rows(values_only=True))
+        if not all_rows:
+            raise ValueError("Spreadsheet is empty")
+        headers = [str(h) if h is not None else f"col_{i}" for i, h in enumerate(all_rows[0])]
+        data_rows = all_rows[1:]
+        native_types = True   # openpyxl returns Python native types
+    elif suffix == ".csv":
+        with path.open(newline="", encoding="utf-8-sig") as fh:
+            reader = csv.reader(fh)
+            headers = next(reader)
+            data_rows = list(reader)
+        native_types = False  # CSV values are strings
+    else:
+        raise ValueError(f"Unsupported file type: {suffix} — use .csv or .xlsx")
+
+    # ── 2. Infer column types ──────────────────────────────────────────────────
+    def _domo_type(val: Any) -> str:
+        if isinstance(val, bool):     return "STRING"
+        if isinstance(val, datetime): return "DATETIME"
+        if isinstance(val, date):     return "DATE"
+        if isinstance(val, int):      return "LONG"
+        if isinstance(val, float):    return "DECIMAL"
+        return "STRING"
+
+    if native_types:
+        col_types = ["STRING"] * len(headers)
+        for row in data_rows[:200]:
+            for i, val in enumerate(row):
+                if val is not None and col_types[i] == "STRING":
+                    t = _domo_type(val)
+                    if t != "STRING":
+                        col_types[i] = t
+    else:
+        col_types = ["STRING"] * len(headers)
+
+    schema_cols = [{"name": h, "type": t} for h, t in zip(headers, col_types)]
+
+    # ── 3. Create PUSH dataset ─────────────────────────────────────────────────
+    ds = auth.post("/data/v2/datasources", body={
+        "dataSourceName": name,
+        "type": "PUSH",
+        "schema": {"columns": schema_cols},
+    })
+    ds_id = ds["dataSource"]["dataSourceId"]
+
+    # ── 4. Serialize to CSV ────────────────────────────────────────────────────
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(headers)
+    for row in data_rows:
+        out = []
+        for val in row:
+            if val is None:
+                out.append("")
+            elif isinstance(val, (datetime, date)):
+                out.append(val.isoformat())
+            else:
+                out.append(str(val))
+        writer.writerow(out)
+    csv_text = buf.getvalue()
+
+    # ── 5. Upload (create session → upload part → commit) ─────────────────────
+    upload_resp = auth.post(
+        f"/data/v3/datasources/{ds_id}/uploads",
+        body={"action": "REPLACE", "message": f"Initial upload from {path.name}", "appendId": "latest"},
+    )
+    upload_id = upload_resp["uploadId"] if isinstance(upload_resp, dict) else upload_resp
+
+    auth.put_text(
+        f"/data/v3/datasources/{ds_id}/uploads/{upload_id}/parts/1",
+        text=csv_text,
+        content_type="text/csv",
+    )
+
+    auth.put(
+        f"/data/v3/datasources/{ds_id}/uploads/{upload_id}/commit",
+        body={"index": True, "appendId": "latest", "message": "Initial upload complete"},
+    )
+
+    return {"id": ds_id, "name": name, "rowCount": len(data_rows), "schema": {"columns": schema_cols}}
+
+
 # ── Webforms ──────────────────────────────────────────────────────────────────
 
 @mcp.tool()
