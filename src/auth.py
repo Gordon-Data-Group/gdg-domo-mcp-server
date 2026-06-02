@@ -168,3 +168,33 @@ def put_text(path: str, text: str, content_type: str = "text/csv", **params: Any
     headers["Content-Type"] = content_type
     with httpx.Client(base_url=base_url(), headers=headers, timeout=120.0) as c:
         return _parse(c.put(path, content=text.encode(), params=_clean_params(params)))
+
+
+def post_multipart(
+    path: str,
+    file_name: str,
+    file_bytes: bytes,
+    mime_type: str = "application/octet-stream",
+    extra_fields: dict[str, str] | None = None,
+    **params: Any,
+) -> Any:
+    """POST a multipart/form-data file upload.
+
+    Content-Type (with boundary) is set automatically by httpx when using the
+    files= parameter — do NOT set it manually or the boundary will be missing.
+    Uses a 120-second timeout for large files.
+    """
+    headers = {
+        "X-DOMO-DEVELOPER-TOKEN": _token(),
+        "Accept": "application/json",
+    }
+    files = {"file": (file_name, file_bytes, mime_type)}
+    with httpx.Client(base_url=base_url(), headers=headers, timeout=120.0) as c:
+        return _parse(
+            c.post(
+                path,
+                files=files,
+                data=extra_fields or {},
+                params=_clean_params(params),
+            )
+        )
