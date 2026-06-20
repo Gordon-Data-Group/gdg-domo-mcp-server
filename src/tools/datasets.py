@@ -665,9 +665,22 @@ def datasets_upload_file(
     import pathlib
     from datetime import date, datetime
 
-    path = pathlib.Path(file_path)
+    path = pathlib.Path(file_path).resolve()
     if not path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
+
+    _ALLOWED_DIRS = (
+        pathlib.Path.home() / "Downloads",
+        pathlib.Path.home() / "Documents",
+        pathlib.Path.home() / "Desktop",
+        pathlib.Path("/tmp"),
+    )
+    if not any(str(path).startswith(str(d)) for d in _ALLOWED_DIRS):
+        raise PermissionError(
+            f"'{path}' is outside the allowed upload directories "
+            f"(~/Downloads, ~/Documents, ~/Desktop, /tmp). "
+            "Move the file to one of those locations and retry."
+        )
 
     name = dataset_name or path.stem
     suffix = path.suffix.lower()

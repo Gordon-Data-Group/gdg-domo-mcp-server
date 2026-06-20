@@ -37,7 +37,9 @@ class DomoHTTPError(RuntimeError):
             detail = response.json()
         except Exception:
             detail = response.text or "(empty body)"
-        super().__init__(f"Domo API {response.status_code} — {response.url}: {detail}")
+        # Strip query string so tokens or sensitive params never appear in traces.
+        url = response.url.copy_with(query=None)
+        super().__init__(f"Domo API {response.status_code} — {url}: {detail}")
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +52,13 @@ def _instance_url() -> str:
         raise DomoConfigError(
             "DOMO_INSTANCE_URL is not set. "
             "Add it to your .env file or environment."
+        )
+    parsed = httpx.URL(url)
+    host = parsed.host.lower()
+    if not (host.endswith(".domo.com") or host == "domo.com"):
+        raise DomoConfigError(
+            f"DOMO_INSTANCE_URL host '{host}' is not a domo.com domain. "
+            "Expected format: https://yourcompany.domo.com"
         )
     return url
 
