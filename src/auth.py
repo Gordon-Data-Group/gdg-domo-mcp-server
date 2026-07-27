@@ -179,6 +179,21 @@ def put_text(path: str, text: str, content_type: str = "text/csv", **params: Any
         return _parse(c.put(path, content=text.encode(), params=_clean_params(params)))
 
 
+def get_bytes(path: str, **params: Any) -> bytes:
+    """GET raw bytes (e.g. CSV/XLSX export data) without JSON parsing.
+
+    Uses a 120-second timeout — export payloads can be large. Omits the
+    default 'Accept: application/json' header so the server honors the
+    format requested via query params (e.g. accept=text/csv).
+    """
+    headers = {k: v for k, v in get_headers().items() if k != "Accept"}
+    with httpx.Client(base_url=base_url(), headers=headers, timeout=120.0) as c:
+        response = c.get(path, params=_clean_params(params))
+        if not response.is_success:
+            raise DomoHTTPError(response)
+        return response.content
+
+
 def post_multipart(
     path: str,
     file_name: str,

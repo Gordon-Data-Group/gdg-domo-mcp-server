@@ -775,6 +775,51 @@ def datasets_upload_file(
     return {"id": ds_id, "name": name, "rowCount": len(data_rows), "schema": {"columns": schema_cols}}
 
 
+# ── File export (download dataset data to a local file) ───────────────────────
+
+@mcp.tool()
+def datasets_export(
+    dataset_id: Annotated[str, "Dataset UUID"],
+    file_path: Annotated[str, "Absolute local path to write the exported file to, e.g. /Users/me/exports/data.csv"],
+    format: Annotated[str, "Export format: 'csv' or 'xlsx'"] = "csv",
+) -> Any:
+    """Export a DataSet's full data and write it directly to a local file.
+
+    Downloads via GET /query/v1/execute/export/{dataset_id} and writes the
+    raw response bytes straight to disk — file content is never passed back
+    through the MCP connection, only a small confirmation summary, so this
+    is safe for large datasets and works well for bulk export loops.
+    """
+    import pathlib
+
+    accept_map = {
+        "csv": "text/csv",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }
+    if format not in accept_map:
+        raise ValueError(f"format must be 'csv' or 'xlsx', got {format!r}")
+
+    path = pathlib.Path(file_path).resolve()
+    home = pathlib.Path.home().resolve()
+    if home not in path.parents and path != home:
+        raise PermissionError(
+            f"'{path}' is outside the allowed export directory ({home}). "
+            "Choose a destination under your home directory."
+        )
+
+    data = auth.get_bytes(
+        f"/query/v1/execute/export/{dataset_id}",
+        accept=accept_map[format],
+        disableFormulaInterpretation="true",
+        includeHeader="true",
+    )
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+
+    return {"dataset_id": dataset_id, "file_path": str(path), "size_bytes": len(data)}
+
+
 # ── Webforms ──────────────────────────────────────────────────────────────────
 
 @mcp.tool()

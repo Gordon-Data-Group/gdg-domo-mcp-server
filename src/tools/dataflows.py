@@ -55,6 +55,37 @@ def dataflows_get(
 
 
 @mcp.tool()
+def dataflows_export(
+    dataflow_id: Annotated[str, "DataFlow ID"],
+    file_path: Annotated[str, "Absolute local path to write the DataFlow definition JSON to, e.g. /Users/me/exports/1234.json"],
+) -> Any:
+    """Fetch a DataFlow's full definition and write it directly to a local JSON file.
+
+    Same GET as dataflows_get, but the definition is written straight to disk
+    instead of being returned through the MCP connection — useful for bulk
+    export loops where passing every definition back through context is wasteful.
+    """
+    import json
+    import pathlib
+
+    path = pathlib.Path(file_path).resolve()
+    home = pathlib.Path.home().resolve()
+    if home not in path.parents and path != home:
+        raise PermissionError(
+            f"'{path}' is outside the allowed export directory ({home}). "
+            "Choose a destination under your home directory."
+        )
+
+    definition = auth.get(f"/dataprocessing/v2/dataflows/{dataflow_id}")
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(definition, indent=2)
+    path.write_text(text)
+
+    return {"dataflow_id": dataflow_id, "file_path": str(path), "size_bytes": len(text.encode())}
+
+
+@mcp.tool()
 def dataflows_get_version(
     dataflow_id: Annotated[str, "DataFlow ID"],
     version_id: Annotated[str, "Version ID"],
