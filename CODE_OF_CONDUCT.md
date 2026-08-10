@@ -22,7 +22,7 @@ This Code of Conduct applies to all project spaces — GitHub issues, pull reque
 
 ## Enforcement
 
-Instances of unacceptable behavior may be reported by opening a private issue or contacting the maintainers directly. All reports will be reviewed and addressed appropriately.
+Instances of unacceptable behavior may be reported by opening a private issue or by emailing [domo.mcp.server@gordondatagroup.com](mailto:domo.mcp.server@gordondatagroup.com). All reports will be reviewed and addressed appropriately.
 
 ## Attribution
 

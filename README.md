@@ -1,8 +1,8 @@
 # Domo MCP Server
 
-> **Alpha Release (v0.0.1)** — This is an independent, community-built project. It is not affiliated with, endorsed by, or supported by Domo. APIs, tool signatures, and behavior may change without notice.
+> **Alpha Release (v0.0.2)** — This is an independent, community-built project. It is not affiliated with, endorsed by, or supported by Domo. APIs, tool signatures, and behavior may change without notice.
 
-MCP server exposing Domo internal APIs as tools. 526 tools across 35 API groups.
+MCP server exposing Domo internal APIs as tools. 527 tools across 35 API groups.
 
 ## Requirements
 

@@ -37,7 +37,9 @@ class DomoHTTPError(RuntimeError):
             detail = response.json()
         except Exception:
             detail = response.text or "(empty body)"
-        super().__init__(f"Domo API {response.status_code} — {response.url}: {detail}")
+        # Strip query string so tokens or sensitive params never appear in traces.
+        url = response.url.copy_with(query=None)
+        super().__init__(f"Domo API {response.status_code} — {url}: {detail}")
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +52,13 @@ def _instance_url() -> str:
         raise DomoConfigError(
             "DOMO_INSTANCE_URL is not set. "
             "Add it to your .env file or environment."
+        )
+    parsed = httpx.URL(url)
+    host = parsed.host.lower()
+    if not (host.endswith(".domo.com") or host == "domo.com"):
+        raise DomoConfigError(
+            f"DOMO_INSTANCE_URL host '{host}' is not a domo.com domain. "
+            "Expected format: https://yourcompany.domo.com"
         )
     return url
 
@@ -168,6 +177,21 @@ def put_text(path: str, text: str, content_type: str = "text/csv", **params: Any
     headers["Content-Type"] = content_type
     with httpx.Client(base_url=base_url(), headers=headers, timeout=120.0) as c:
         return _parse(c.put(path, content=text.encode(), params=_clean_params(params)))
+
+
+def get_bytes(path: str, **params: Any) -> bytes:
+    """GET raw bytes (e.g. CSV/XLSX export data) without JSON parsing.
+
+    Uses a 120-second timeout — export payloads can be large. Omits the
+    default 'Accept: application/json' header so the server honors the
+    format requested via query params (e.g. accept=text/csv).
+    """
+    headers = {k: v for k, v in get_headers().items() if k != "Accept"}
+    with httpx.Client(base_url=base_url(), headers=headers, timeout=120.0) as c:
+        response = c.get(path, params=_clean_params(params))
+        if not response.is_success:
+            raise DomoHTTPError(response)
+        return response.content
 
 
 def post_multipart(
