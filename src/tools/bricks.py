@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=True)
 def bricks_list_designs(
     check_admin_authority: Annotated[bool | None, "Check admin authority"] = None,
     creator: Annotated[str | None, "Filter by creator"] = None,
@@ -39,7 +39,7 @@ def bricks_list_designs(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=True)
 def bricks_get_app(
     app_id: Annotated[str, "App instance ID"],
 ) -> Any:
@@ -47,7 +47,7 @@ def bricks_get_app(
     return auth.get(f"/domoapps/apps/v2/{app_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=True)
 def bricks_get_design(
     design_id: Annotated[str, "Design ID"],
     parts: Annotated[str | None, "Comma-separated parts to include"] = None,
@@ -56,7 +56,7 @@ def bricks_get_design(
     return auth.get(f"/apps/v1/designs/{design_id}", parts=parts)
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=True)
 def bricks_get_app_file(
     design_id: Annotated[str, "Design ID"],
     version_number: Annotated[str, "Version number (e.g. '0.0.1')"],
@@ -72,7 +72,7 @@ def bricks_get_app_file(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=True)
 def bricks_get_app_version(
     design_id: Annotated[str, "Design ID"],
     version_number: Annotated[str, "Version number (e.g. '0.0.1')"],
@@ -81,7 +81,7 @@ def bricks_get_app_version(
     return auth.get(f"/v1/designs/{design_id}/versions/{version_number}")
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=True)
 def bricks_get_app_context(
     context_id: Annotated[str, "Context ID"],
 ) -> Any:
@@ -89,7 +89,7 @@ def bricks_get_app_context(
     return auth.get(f"/domoapps/apps/v2/contexts/{context_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=True)
 def bricks_count_designs(
     check_admin_authority: Annotated[bool | None, "Check admin authority"] = None,
     creator: Annotated[str | None, "Filter by creator"] = None,
@@ -108,7 +108,7 @@ def bricks_count_designs(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=False)
 def bricks_create_instance(
     design_id: Annotated[str, "Design ID (UUID)"],
     design_version: Annotated[str, "Design version (e.g. '0.0.1')"],
@@ -122,7 +122,7 @@ def bricks_create_instance(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=False)
 def bricks_share_design(
     design_id: Annotated[str, "Design ID"],
     permissions: Annotated[str, "Permission level to grant (e.g. 'READ')"],
@@ -135,7 +135,7 @@ def bricks_share_design(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=False)
 def bricks_update_app_file(
     design_id: Annotated[str, "Design ID"],
     version_number: Annotated[str, "Version number"],
@@ -156,7 +156,7 @@ def bricks_update_app_file(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=False)
 def bricks_update_instance(
     instance_id: Annotated[str, "Instance ID"],
     body: Annotated[
@@ -173,7 +173,7 @@ def bricks_update_instance(
     return auth.put(f"/apps/v1/instances/{instance_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=False)
 def bricks_update_app_context(
     context_id: Annotated[str, "Context ID"],
     body: Annotated[
@@ -189,7 +189,7 @@ def bricks_update_app_context(
     return auth.put(f"/domoapps/apps/v2/contexts/{context_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=False)
 def bricks_delete_design_v1(
     design_id: Annotated[str, "Design ID to delete"],
 ) -> Any:
@@ -197,7 +197,7 @@ def bricks_delete_design_v1(
     return auth.delete(f"/apps/v1/designs/{design_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=False)
 def bricks_delete_instance(
     instance_id: Annotated[str, "Instance ID to delete"],
 ) -> Any:
@@ -205,7 +205,7 @@ def bricks_delete_instance(
     return auth.delete(f"/apps/v1/instances/{instance_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="bricks", read_only=False)
 def bricks_restore_design(
     design_id: Annotated[str, "Design ID to restore from deleted state"],
 ) -> Any:

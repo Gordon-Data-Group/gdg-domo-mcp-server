@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_search(
     body: Annotated[
         dict[str, Any],
@@ -28,7 +28,7 @@ def dataflows_search(
     return auth.post("/search/v1/query", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_list(
     limit: Annotated[int | None, "Max DataFlows to return"] = None,
     offset: Annotated[int | None, "Pagination offset"] = None,
@@ -38,7 +38,7 @@ def dataflows_list(
     return auth.get("/dataprocessing/v2/dataflows", limit=limit, offset=offset, orderBy=order_by)
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_list_versions(
     dataflow_id: Annotated[str, "DataFlow ID"],
 ) -> Any:
@@ -46,7 +46,7 @@ def dataflows_list_versions(
     return auth.get(f"/dataprocessing/v1/dataflows/{dataflow_id}/versions")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_get(
     dataflow_id: Annotated[str, "DataFlow ID"],
 ) -> Any:
@@ -54,7 +54,7 @@ def dataflows_get(
     return auth.get(f"/dataprocessing/v2/dataflows/{dataflow_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_export(
     dataflow_id: Annotated[str, "DataFlow ID"],
     file_path: Annotated[str, "Absolute local path to write the DataFlow definition JSON to, e.g. /Users/me/exports/1234.json"],
@@ -85,7 +85,7 @@ def dataflows_export(
     return {"dataflow_id": dataflow_id, "file_path": str(path), "size_bytes": len(text.encode())}
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_get_version(
     dataflow_id: Annotated[str, "DataFlow ID"],
     version_id: Annotated[str, "Version ID"],
@@ -94,7 +94,7 @@ def dataflows_get_version(
     return auth.get(f"/dataprocessing/v2/dataflows/{dataflow_id}/versions/{version_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_get_version_by_number(
     dataflow_id: Annotated[str, "DataFlow ID"],
     version_number: Annotated[str, "Version number"],
@@ -103,7 +103,7 @@ def dataflows_get_version_by_number(
     return auth.get(f"/dataprocessing/v3/dataflows/{dataflow_id}/versions/{version_number}")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_get_executions(
     dataflow_id: Annotated[str, "DataFlow ID"],
     limit: Annotated[int | None, "Max executions to return"] = None,
@@ -117,7 +117,7 @@ def dataflows_get_executions(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_get_execution(
     dataflow_id: Annotated[str, "DataFlow ID"],
     execution_id: Annotated[str, "Execution ID"],
@@ -128,7 +128,7 @@ def dataflows_get_execution(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_get_tags(
     dataflow_id: Annotated[str, "DataFlow ID"],
 ) -> Any:
@@ -136,7 +136,7 @@ def dataflows_get_tags(
     return auth.get(f"/dataprocessing/v1/dataflows/{dataflow_id}/subscription")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_get_saved_filters(
     query_profile: Annotated[str | None, "Query profile filter"] = None,
 ) -> Any:
@@ -144,25 +144,25 @@ def dataflows_get_saved_filters(
     return auth.get("/search/v1/saved", queryProfile=query_profile)
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_get_timezones() -> Any:
     """Get available timezones for DataFlows."""
     return auth.get("/dataprocessing/v1/dataflows/timezones")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_get_sql_functions() -> Any:
     """Get available SQL functions for DataFlow expressions."""
     return auth.get("/dataprocessing/v1/expression-docs")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_count_by_type() -> Any:
     """Count DataFlows grouped by type."""
     return auth.get("/dataprocessing/v2/dataflows/filters/dataflowType")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_run(
     dataflow_id: Annotated[str, "DataFlow ID to run"],
     activation_type_override: Annotated[str | None, "Activation type override"] = None,
@@ -176,7 +176,7 @@ def dataflows_run(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_bulk_run(
     dataflow_ids: Annotated[list[int], "List of DataFlow IDs to run"],
 ) -> Any:
@@ -187,7 +187,7 @@ def dataflows_bulk_run(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=True)
 def dataflows_run_preview(
     body: Annotated[
         dict[str, Any],
@@ -198,7 +198,7 @@ def dataflows_run_preview(
     return auth.post("/dataprocessing/v1/dataflows/previews/run", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_create(
     body: Annotated[
         dict[str, Any],
@@ -310,7 +310,7 @@ def dataflows_create(
     return auth.post("/dataprocessing/v1/dataflows", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_add_tag(
     dataflow_id: Annotated[str, "DataFlow ID"],
     tag: Annotated[str, "Tag name to add"],
@@ -322,7 +322,7 @@ def dataflows_add_tag(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_bulk_add_tags(
     dataflow_ids: Annotated[list[int], "List of DataFlow IDs"],
     tag_names: Annotated[list[str], "List of tag names to add"],
@@ -334,7 +334,7 @@ def dataflows_bulk_add_tags(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_update(
     dataflow_id: Annotated[str, "DataFlow ID"],
     body: Annotated[
@@ -354,7 +354,7 @@ def dataflows_update(
     return auth.put(f"/dataprocessing/v1/dataflows/{dataflow_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_update_owner_name_desc(
     dataflow_id: Annotated[str, "DataFlow ID"],
     body: Annotated[
@@ -366,7 +366,7 @@ def dataflows_update_owner_name_desc(
     return auth.put(f"/dataprocessing/v1/dataflows/{dataflow_id}/patch", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_bulk_update_owner(
     dataflow_ids: Annotated[list[int], "List of DataFlow IDs"],
     responsible_user_id: Annotated[int, "New owner user ID"],
@@ -385,7 +385,7 @@ def dataflows_bulk_update_owner(
     return auth.put("/dataprocessing/v1/dataflows/bulk/patch", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_delete(
     dataflow_id: Annotated[str, "DataFlow ID to delete"],
 ) -> Any:
@@ -393,7 +393,7 @@ def dataflows_delete(
     return auth.delete(f"/dataprocessing/v1/dataflows/{dataflow_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_bulk_delete(
     dataflow_ids: Annotated[list[int], "List of DataFlow IDs to delete"],
 ) -> Any:
@@ -404,7 +404,7 @@ def dataflows_bulk_delete(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_remove_all_tags(
     dataflow_id: Annotated[str, "DataFlow ID"],
 ) -> Any:
@@ -412,7 +412,7 @@ def dataflows_remove_all_tags(
     return auth.delete(f"/dataprocessing/v1/dataflows/{dataflow_id}/tags")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_remove_tag(
     dataflow_id: Annotated[str, "DataFlow ID"],
     tag: Annotated[str, "Tag name to remove"],
@@ -421,7 +421,7 @@ def dataflows_remove_tag(
     return auth.delete(f"/dataprocessing/v1/dataflows/{dataflow_id}/tags/{tag}")
 
 
-@mcp.tool()
+@domo_tool(toolset="dataflows", read_only=False)
 def dataflows_bulk_remove_tags(
     dataflow_ids: Annotated[list[int], "List of DataFlow IDs"],
     tag_names: Annotated[list[str], "List of tag names to remove"],

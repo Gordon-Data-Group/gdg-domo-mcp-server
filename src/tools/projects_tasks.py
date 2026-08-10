@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=True)
 def projects_list(
     limit: Annotated[int | None, "Max projects to return"] = None,
     offset: Annotated[int | None, "Pagination offset"] = None,
@@ -20,7 +20,7 @@ def projects_list(
     return auth.get("/content/v1/projects", limit=limit, offset=offset, status=status)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=True)
 def projects_list_tags(
     q: Annotated[str | None, "Search query for tags"] = None,
 ) -> Any:
@@ -28,7 +28,7 @@ def projects_list_tags(
     return auth.get("/content/v1/tags", q=q)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=True)
 def projects_get_for_user(
     user_id: Annotated[str, "User ID"],
     limit: Annotated[int | None, "Max projects to return"] = None,
@@ -44,7 +44,7 @@ def projects_get_for_user(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=True)
 def projects_get_tasks(
     project_id: Annotated[str, "Project ID"],
     search: Annotated[str | None, "Search term"] = None,
@@ -60,7 +60,7 @@ def projects_get_tasks(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=True)
 def projects_get_list_tasks(
     project_id: Annotated[str, "Project ID"],
     list_id: Annotated[str, "List ID"],
@@ -73,7 +73,7 @@ def projects_get_list_tasks(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=True)
 def projects_get_user_task_assign(
     user_id: Annotated[str, "User ID"],
     limit: Annotated[int | None, "Max results to return"] = None,
@@ -89,7 +89,7 @@ def projects_get_user_task_assign(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=True)
 def projects_get_lists(
     project_id: Annotated[str, "Project ID"],
     archived: Annotated[bool | None, "Include archived lists"] = None,
@@ -98,7 +98,7 @@ def projects_get_lists(
     return auth.get(f"/content/v1/projects/{project_id}/lists", archived=archived)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=True)
 def projects_get_project_tags(
     project_id: Annotated[str, "Project ID"],
     archived: Annotated[bool | None, "Include archived tags"] = None,
@@ -107,7 +107,7 @@ def projects_get_project_tags(
     return auth.get(f"/content/v1/projects/{project_id}/tags", archived=archived)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=True)
 def projects_get(
     project_id: Annotated[str, "Project ID"],
 ) -> Any:
@@ -115,7 +115,7 @@ def projects_get(
     return auth.get(f"/content/v1/projects/{project_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=True)
 def projects_get_task(
     task_id: Annotated[str, "Task ID"],
 ) -> Any:
@@ -123,7 +123,7 @@ def projects_get_task(
     return auth.get(f"/content/v1/tasks/{task_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=False)
 def projects_create(
     body: Annotated[
         dict[str, Any],
@@ -134,7 +134,7 @@ def projects_create(
     return auth.post("/content/v1/projects", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=False)
 def projects_create_task(
     project_id: Annotated[str, "Project ID"],
     list_id: Annotated[str, "List ID"],
@@ -150,7 +150,7 @@ def projects_create_task(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=False)
 def projects_create_user_task(
     user_id: Annotated[str, "User ID"],
     body: Annotated[
@@ -162,7 +162,7 @@ def projects_create_user_task(
     return auth.post(f"/content/v2/users/{user_id}/tasks", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=False)
 def projects_create_list(
     project_id: Annotated[str, "Project ID"],
     name: Annotated[str, "List name"],
@@ -178,7 +178,7 @@ def projects_create_list(
     return auth.post(f"/content/v1/projects/{project_id}/lists", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=False)
 def projects_create_task_attachment(
     task_id: Annotated[str, "Task ID"],
     data_file_id: Annotated[int, "File ID to attach"],
@@ -193,7 +193,7 @@ def projects_create_task_attachment(
     return auth.post(f"/content/v1/tasks/{task_id}/attachments", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=False)
 def projects_update(
     project_id: Annotated[str, "Project ID"],
     body: Annotated[dict[str, Any], "Full project object to replace"],
@@ -202,7 +202,7 @@ def projects_update(
     return auth.put(f"/content/v1/projects/{project_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=False)
 def projects_update_task(
     task_id: Annotated[str, "Task ID"],
     body: Annotated[dict[str, Any], "Full task object to replace"],
@@ -211,7 +211,7 @@ def projects_update_task(
     return auth.put(f"/content/v1/tasks/{task_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=False)
 def projects_update_list(
     project_id: Annotated[str, "Project ID"],
     list_id: Annotated[str, "List ID"],
@@ -221,7 +221,7 @@ def projects_update_list(
     return auth.put(f"/content/v1/projects/{project_id}/lists/{list_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="projects_tasks", read_only=False)
 def projects_delete(
     project_id: Annotated[str, "Project ID to delete"],
 ) -> Any:

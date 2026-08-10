@@ -6,17 +6,17 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_list_publications() -> Any:
     """List all Domo Everywhere publications."""
     return auth.get("/publish/v2/publications")
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_list_publication_summaries(
     public: Annotated[bool | None, "Filter to public publications"] = None,
     limit: Annotated[int | None, "Max results to return"] = None,
@@ -35,7 +35,7 @@ def domo_everywhere_list_publication_summaries(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_get_publication(
     publication_id: Annotated[str, "Publication ID"],
 ) -> Any:
@@ -43,7 +43,7 @@ def domo_everywhere_get_publication(
     return auth.get(f"/publish/v2/publications/{publication_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_get_publication_summary(
     publication_id: Annotated[str, "Publication ID"],
 ) -> Any:
@@ -51,13 +51,13 @@ def domo_everywhere_get_publication_summary(
     return auth.get(f"/publish/v2/publications/summaries/{publication_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_get_publication_status() -> Any:
     """Get the status of Domo Everywhere publications."""
     return auth.get("/publish/v2/publications/status")
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_list_subscription_summaries(
     search_term: Annotated[str | None, "Search term"] = None,
     limit: Annotated[int | None, "Max results to return"] = None,
@@ -72,19 +72,19 @@ def domo_everywhere_list_subscription_summaries(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_list_auto_subscriptions() -> Any:
     """List automatic subscriptions."""
     return auth.get("/publish/v2/automatic-subscriptions")
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_list_auto_sub_shares() -> Any:
     """List automatic subscription shares."""
     return auth.get("/publish/v2/automatic-subscriptions/shares/v1")
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_list_invites(
     search_term: Annotated[str | None, "Search term"] = None,
     limit: Annotated[int | None, "Max results to return"] = None,
@@ -99,7 +99,7 @@ def domo_everywhere_list_invites(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_count_summaries(
     search_term: Annotated[str | None, "Search term"] = None,
 ) -> Any:
@@ -107,7 +107,7 @@ def domo_everywhere_count_summaries(
     return auth.get("/publish/v2/subscriptions/summaries/counts", searchTerm=search_term)
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_count_invites(
     search_term: Annotated[str | None, "Search term"] = None,
 ) -> Any:
@@ -115,7 +115,7 @@ def domo_everywhere_count_invites(
     return auth.get("/publish/v2/subscriptions/invites/counts", searchTerm=search_term)
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=True)
 def domo_everywhere_get_subscription_share(
     subscription_id: Annotated[str, "Subscription ID"],
 ) -> Any:
@@ -123,7 +123,7 @@ def domo_everywhere_get_subscription_share(
     return auth.get(f"/publish/v2/subscriptions/{subscription_id}/share")
 
 
-@mcp.tool()
+@domo_tool(toolset="domo_everywhere", read_only=False)
 def domo_everywhere_update_subscription(
     subscription_id: Annotated[str, "Subscription ID"],
     body: Annotated[

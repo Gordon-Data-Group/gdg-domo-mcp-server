@@ -6,17 +6,17 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="elevation", read_only=True)
 def elevation_get_setting() -> Any:
     """Get the OTP elevation setting for the instance."""
     return auth.get("/customer/v1/properties/authentication.otp_elevation")
 
 
-@mcp.tool()
+@domo_tool(toolset="elevation", read_only=False)
 def elevation_authenticate_otp(
     user_id: Annotated[str, "User ID to elevate"],
     time_based_one_time_password: Annotated[str, "TOTP code for elevation"],
@@ -28,7 +28,7 @@ def elevation_authenticate_otp(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="elevation", read_only=False)
 def elevation_update_setting(
     value: Annotated[str, "New setting value (e.g. 'true' or 'false')"],
 ) -> Any:

@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=True)
 def pages_list_admin_summary(
     body: Annotated[
         dict[str, Any],
@@ -31,7 +31,7 @@ def pages_list_admin_summary(
     return auth.post("/content/v1/pages/adminsummary", body=body, limit=limit, skip=skip)
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=True)
 def pages_get(
     page_id: Annotated[str, "Page ID"],
     parts: Annotated[str | None, "Comma-separated parts to include"] = None,
@@ -51,7 +51,7 @@ def pages_get(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=True)
 def pages_get_with_cards(
     page_id: Annotated[str, "Page ID"],
     parts: Annotated[str | None, "Comma-separated parts to include"] = None,
@@ -71,7 +71,7 @@ def pages_get_with_cards(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=True)
 def pages_get_access(
     page_id: Annotated[str, "Page ID"],
     filter: Annotated[str | None, "Filter string for access list"] = None,
@@ -87,7 +87,7 @@ def pages_get_access(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=True)
 def pages_get_navigation_order(
     include_start_page: Annotated[bool | None, "Include the start/home page in results"] = None,
     elevate_shared_page: Annotated[bool | None, "Elevate shared pages in the order"] = None,
@@ -102,7 +102,7 @@ def pages_get_navigation_order(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_create(
     title: Annotated[str, "Page title"],
     parent_page_id: Annotated[int | None, "Parent page ID (0 or omit for top-level)"] = None,
@@ -123,7 +123,7 @@ def pages_create(
     return auth.post("/content/v1/pages", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_share_access(
     resources: Annotated[
         list[dict[str, Any]],
@@ -143,7 +143,7 @@ def pages_share_access(
     return auth.post("/content/v1/share", body=body, sendEmail=send_email)
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_bulk_move(
     page_ids: Annotated[list[int], "List of page IDs to move"],
     page_permission: Annotated[str | None, "Permission to apply after move (e.g. 'ORIGINAL')"] = None,
@@ -158,7 +158,7 @@ def pages_bulk_move(
     return auth.put("/content/v1/pages/bulk/move", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_reorder(
     page_order_map: Annotated[
         dict[str, str],
@@ -172,7 +172,7 @@ def pages_reorder(
     return auth.put("/content/v1/pages/pageorder", body={"pageOrderMap": page_order_map})
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_update(
     page_id: Annotated[str, "Page ID"],
     title: Annotated[str | None, "New page title"] = None,
@@ -187,7 +187,7 @@ def pages_update(
     return auth.put(f"/content/v1/pages/{page_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_duplicate(
     page_id: Annotated[str, "Page ID to duplicate"],
     page_title: Annotated[str | None, "Title for the duplicated page"] = None,
@@ -213,7 +213,7 @@ def pages_duplicate(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_duplicate_async(
     page_id: Annotated[str, "Page ID to duplicate"],
     page_title: Annotated[str | None, "Title for the duplicated page"] = None,
@@ -239,7 +239,7 @@ def pages_duplicate_async(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_delete(
     page_id: Annotated[str, "Page ID to delete"],
 ) -> Any:
@@ -247,7 +247,7 @@ def pages_delete(
     return auth.delete(f"/content/v1/pages/{page_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_remove_access(
     type: Annotated[str, "Recipient type ('user' or 'group')"],
     id: Annotated[str, "Recipient ID to remove"],
@@ -257,7 +257,7 @@ def pages_remove_access(
     return auth.delete(f"/content/v1/share/bulk/page/{type}/{id}", resourceIds=resource_ids)
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_bulk_remove_owners(
     owners: Annotated[
         list[dict[str, Any]],
@@ -276,7 +276,7 @@ def pages_bulk_remove_owners(
 # Layouts
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=True)
 def pages_get_layout(
     layout_id: Annotated[str, "Layout ID — this is the numeric layoutId from pageLayoutV4.layoutId, NOT the page ID"],
 ) -> Any:
@@ -289,7 +289,7 @@ def pages_get_layout(
     return auth.get(f"/content/v4/pages/layouts/{layout_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_create_writelock(
     layout_id: Annotated[str, "Layout ID to lock for editing"],
 ) -> Any:
@@ -302,7 +302,7 @@ def pages_create_writelock(
     return auth.put(f"/content/v4/pages/layouts/{layout_id}/writelock")
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_update_layout(
     layout_id: Annotated[str, "Layout ID (from pageLayoutV4.layoutId on the page)"],
     body: Annotated[
@@ -336,7 +336,7 @@ def pages_update_layout(
     return auth.put(f"/content/v4/pages/layouts/{layout_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_delete_writelock(
     layout_id: Annotated[str, "Layout ID to release the write lock on"],
 ) -> Any:
@@ -348,7 +348,7 @@ def pages_delete_writelock(
 # Filter Views
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=True)
 def pages_list_filter_views(
     page_id: Annotated[str, "Page ID"],
 ) -> Any:
@@ -356,7 +356,7 @@ def pages_list_filter_views(
     return auth.get(f"/content/v3/pages/{page_id}/analyzer/named")
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_update_filter_view(
     page_id: Annotated[str, "Page ID"],
     body: Annotated[
@@ -373,7 +373,7 @@ def pages_update_filter_view(
     return auth.put(f"/content/v3/pages/{page_id}/analyzer", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="pages", read_only=False)
 def pages_delete_filter_view(
     filter_view_id: Annotated[str, "Filter view ID to delete"],
 ) -> Any:

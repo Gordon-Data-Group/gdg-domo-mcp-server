@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=True)
 def alerts_list(
     all: Annotated[bool | None, "Return all alerts, not just the current user's"] = None,
     fields: Annotated[str | None, "Comma-separated fields to include in the response"] = None,
@@ -21,19 +21,19 @@ def alerts_list(
     return auth.get("/social/v4/alerts", all=all, fields=fields, limit=limit, offset=offset)
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=True)
 def alerts_list_immediate() -> Any:
     """List alerts configured to trigger immediately (no schedule delay)."""
     return auth.get("/messaging/v3/subscriptions/schedule/primary/immediate")
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=True)
 def alerts_list_immediate_preferences() -> Any:
     """Get the current user's notification preferences for immediately-triggered alerts."""
     return auth.get("/messaging/v3/preferences/immediate/user/current/alert_triggered")
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=True)
 def alerts_search(
     body: Annotated[
         dict[str, Any],
@@ -52,7 +52,7 @@ def alerts_search(
     return auth.post("/search/v1/query", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=True)
 def alerts_get_bulk(
     alert_ids: Annotated[list[str], "List of alert IDs to fetch"],
     all: Annotated[bool | None, "Include alerts the current user does not own"] = None,
@@ -73,7 +73,7 @@ def alerts_get_bulk(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=True)
 def alerts_get(
     alert_id: Annotated[str, "Alert ID"],
 ) -> Any:
@@ -81,7 +81,7 @@ def alerts_get(
     return auth.get(f"/social/v4/alerts/{alert_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=True)
 def alerts_get_action(
     alert_id: Annotated[str, "Alert ID"],
     action_id: Annotated[str, "Action ID"],
@@ -90,7 +90,7 @@ def alerts_get_action(
     return auth.get(f"/social/v4/alerts/{alert_id}/actions/{action_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=True)
 def alerts_get_evaluations(
     alert_id: Annotated[str, "Alert ID"],
 ) -> Any:
@@ -98,7 +98,7 @@ def alerts_get_evaluations(
     return auth.get(f"/social/v4/alerts/{alert_id}/evaluations")
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=False)
 def alerts_create(
     body: Annotated[
         dict[str, Any],
@@ -116,7 +116,7 @@ def alerts_create(
     return auth.post("/social/v4/alerts", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=False)
 def alerts_share(
     alert_id: Annotated[str, "Alert ID to share"],
     alert_subscriptions: Annotated[
@@ -138,7 +138,7 @@ def alerts_share(
     return auth.post(f"/social/v4/alerts/{alert_id}/share", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=False)
 def alerts_update(
     alert_id: Annotated[str, "Alert ID"],
     body: Annotated[
@@ -150,7 +150,7 @@ def alerts_update(
     return auth.patch(f"/social/v4/alerts/{alert_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=False)
 def alerts_update_rules(
     alert_id: Annotated[str, "Alert ID"],
     body: Annotated[
@@ -167,7 +167,7 @@ def alerts_update_rules(
     return auth.put(f"/social/v4/alerts/{alert_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=False)
 def alerts_update_message_template(
     alert_id: Annotated[str, "Alert ID"],
     body: Annotated[str, "HTML body of the message template, e.g. '<p><span class=\"INAF rule\">Rule text</span> for card <span class=\"INAF cardName\">Name</span>. It was <span class=\"INAF previousValue\">[Previous alert value]</span>, now it&#x27;s <span class=\"INAF currentValue\">[Current alert value]</span>.</p>'"],
@@ -182,7 +182,7 @@ def alerts_update_message_template(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=False)
 def alerts_delete(
     alert_id: Annotated[str, "Alert ID to delete"],
 ) -> Any:
@@ -190,7 +190,7 @@ def alerts_delete(
     return auth.delete(f"/social/v4/alerts/{alert_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="alerts", read_only=False)
 def alerts_unshare(
     alert_id: Annotated[str, "Alert ID"],
     subscriber_id: Annotated[str | None, "Subscriber ID to remove"] = None,

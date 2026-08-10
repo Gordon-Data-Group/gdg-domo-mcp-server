@@ -6,17 +6,17 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_list() -> Any:
     """List all data accounts in the Domo instance."""
     return auth.get("/data/v1/accounts")
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_search(
     body: Annotated[
         dict[str, Any],
@@ -34,19 +34,19 @@ def accounts_search(
     return auth.post("/search/v1/query", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_list_oauth_configs() -> Any:
     """List OAuth configurations available for user-level account templates."""
     return auth.get("/data/v1/accounts/templates/user/extended")
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_list_providers_with_accounts() -> Any:
     """List data providers that have at least one account configured."""
     return auth.get("/data/v2/datasources/providers")
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_list_providers(
     fields: Annotated[str | None, "Comma-separated fields to include in the response"] = None,
     filter: Annotated[str | None, "Filter string to narrow results"] = None,
@@ -61,7 +61,7 @@ def accounts_list_providers(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_get_by_provider(
     provider: Annotated[str, "Provider key (e.g. 'salesforce')"],
 ) -> Any:
@@ -69,7 +69,7 @@ def accounts_get_by_provider(
     return auth.get(f"/data/v1/accounts/provider/{provider}")
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_get(
     account_id: Annotated[str, "Account ID"],
 ) -> Any:
@@ -77,7 +77,7 @@ def accounts_get(
     return auth.get(f"/data/v1/accounts/{account_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_get_credentials(
     provider: Annotated[str, "Provider key"],
     account_id: Annotated[str, "Account ID"],
@@ -87,7 +87,7 @@ def accounts_get_credentials(
     return auth.get(f"/data/v1/providers/{provider}/account/{account_id}", unmask=unmask)
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_get_provider(
     provider: Annotated[str, "Provider key"],
     fields: Annotated[str | None, "Comma-separated fields to include"] = None,
@@ -103,7 +103,7 @@ def accounts_get_provider(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_get_provider_image(
     provider: Annotated[str, "Provider key"],
 ) -> Any:
@@ -111,7 +111,7 @@ def accounts_get_provider_image(
     return auth.get(f"/data/v1/providers/{provider}/images/96.png")
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_get_appstore_connector(
     connector: Annotated[str, "Connector ID from the Domo Appstore"],
     fields: Annotated[str | None, "Comma-separated fields to include"] = None,
@@ -127,7 +127,7 @@ def accounts_get_appstore_connector(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_get_datasets_used(
     account_id: Annotated[str, "Account ID"],
 ) -> Any:
@@ -135,7 +135,7 @@ def accounts_get_datasets_used(
     return auth.get(f"/data/v2/datasources/account/{account_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_get_datasets_used_bulk(
     account_ids: Annotated[list[int], "List of account IDs to look up"],
 ) -> Any:
@@ -143,7 +143,7 @@ def accounts_get_datasets_used_bulk(
     return auth.post("/data/v2/datasources/accounts", body=account_ids)
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=True)
 def accounts_validate_credentials(
     data_provider_key: Annotated[str, "Provider key to validate against"],
     credentials: Annotated[
@@ -161,7 +161,7 @@ def accounts_validate_credentials(
     return auth.post("/data/v1/accounts/validators", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=False)
 def accounts_create(
     name: Annotated[str, "Internal account name"],
     display_name: Annotated[str, "Human-readable display name"],
@@ -181,7 +181,7 @@ def accounts_create(
     return auth.post("/data/v1/accounts", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=False)
 def accounts_update_name(
     account_id: Annotated[str, "Account ID"],
     name: Annotated[str, "New display name for the account"],
@@ -190,7 +190,7 @@ def accounts_update_name(
     return auth.put_text(f"/data/v1/accounts/{account_id}/name", text=name, content_type="text/plain")
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=False)
 def accounts_update_credentials(
     provider_id: Annotated[str, "Provider key"],
     account_id: Annotated[str, "Account ID"],
@@ -200,7 +200,7 @@ def accounts_update_credentials(
     return auth.put(f"/data/v1/providers/{provider_id}/account/{account_id}", body=credentials)
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=False)
 def accounts_update_access(
     account_id: Annotated[str, "Account ID"],
     type: Annotated[str, "Principal type: 'USER' or 'GROUP'"],
@@ -217,7 +217,7 @@ def accounts_update_access(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="accounts", read_only=False)
 def accounts_delete(
     account_id: Annotated[str, "Account ID to delete"],
 ) -> Any:

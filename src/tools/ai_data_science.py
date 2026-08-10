@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
@@ -14,7 +14,7 @@ from src import auth
 # AutoML
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_automl_list_models(
     dataset_id: Annotated[str, "Dataset ID to list AutoML models for"],
     include_details: Annotated[bool | None, "Include detailed model information"] = None,
@@ -26,7 +26,7 @@ def ai_automl_list_models(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_automl_get_model(
     dataset_id: Annotated[str, "Dataset ID"],
     model_id: Annotated[str, "AutoML model ID"],
@@ -39,7 +39,7 @@ def ai_automl_get_model(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_automl_get_model_schema(
     model_id: Annotated[str, "AutoML model ID"],
 ) -> Any:
@@ -47,7 +47,7 @@ def ai_automl_get_model_schema(
     return auth.get(f"/dataprocessing/v1/ml/automl/job/{model_id}/schema")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_automl_explain_model(
     model_id: Annotated[str, "AutoML model ID"],
 ) -> Any:
@@ -55,7 +55,7 @@ def ai_automl_explain_model(
     return auth.get(f"/dataprocessing/v1/ml/automl/job/{model_id}/explain")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_automl_add_model_to_dataset(
     dataset_id: Annotated[str, "Dataset ID to attach the model to"],
     automl_job_id: Annotated[int, "AutoML job ID"],
@@ -77,7 +77,7 @@ def ai_automl_add_model_to_dataset(
 # AI Models (user-generated)
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_models_list(
     body: Annotated[
         dict[str, Any],
@@ -94,7 +94,7 @@ def ai_models_list(
     return auth.post("/datascience/ml/v1/search/models", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_models_get(
     model_id: Annotated[str, "Model ID (UUID)"],
 ) -> Any:
@@ -102,7 +102,7 @@ def ai_models_get(
     return auth.get(f"/datascience/ml/v1/models/{model_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_models_update(
     model_id: Annotated[str, "Model ID (UUID)"],
     body: Annotated[
@@ -119,7 +119,7 @@ def ai_models_update(
     return auth.put(f"/datascience/ml/v1/models/{model_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_models_update_owner(
     model_id: Annotated[str, "Model ID (UUID)"],
     user_id: Annotated[int, "New owner user ID"],
@@ -128,7 +128,7 @@ def ai_models_update_owner(
     return auth.post(f"/datascience/ml/v1/models/{model_id}/ownership", body={"userId": user_id})
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_models_delete(
     model_id: Annotated[str, "Model ID (UUID) to delete"],
 ) -> Any:
@@ -140,7 +140,7 @@ def ai_models_delete(
 # AI Projects
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_projects_list(
     body: Annotated[
         dict[str, Any],
@@ -157,7 +157,7 @@ def ai_projects_list(
     return auth.post("/datascience/ml/v1/search/projects", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_projects_get(
     project_id: Annotated[str, "Project ID (UUID)"],
 ) -> Any:
@@ -165,7 +165,7 @@ def ai_projects_get(
     return auth.get(f"/datascience/ml/v1/projects/{project_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_projects_update(
     project_id: Annotated[str, "Project ID (UUID)"],
     body: Annotated[
@@ -182,7 +182,7 @@ def ai_projects_update(
     return auth.put(f"/datascience/ml/v1/projects/{project_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_projects_update_owner(
     project_id: Annotated[str, "Project ID (UUID)"],
     user_id: Annotated[int, "New owner user ID"],
@@ -191,7 +191,7 @@ def ai_projects_update_owner(
     return auth.post(f"/datascience/ml/v1/projects/{project_id}/ownership", body={"userId": user_id})
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_projects_delete(
     project_id: Annotated[str, "Project ID (UUID) to delete"],
 ) -> Any:
@@ -203,19 +203,19 @@ def ai_projects_delete(
 # AI Service Layer — Text to SQL
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_text_sql_list_models() -> Any:
     """List available models for the Text to SQL service."""
     return auth.get("/ai/v1/settings/services/sql/models")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_text_sql_get_default_model() -> Any:
     """Get the default model configured for the Text to SQL service."""
     return auth.get("/ai/v1/settings/services/sql/models/default")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_text_sql_run(
     body: Annotated[
         dict[str, Any],
@@ -235,19 +235,19 @@ def ai_text_sql_run(
 # AI Service Layer — Text Generation
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_text_generation_list_models() -> Any:
     """List available models for the Text Generation service."""
     return auth.get("/ai/v1/settings/services/generation/models")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_text_generation_get_default_model() -> Any:
     """Get the default model configured for the Text Generation service."""
     return auth.get("/ai/v1/settings/services/generation/models/default")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_text_generation_run(
     body: Annotated[
         dict[str, Any],
@@ -265,19 +265,19 @@ def ai_text_generation_run(
 # AI Service Layer — Text to Beast Mode
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_text_beastmode_list_models() -> Any:
     """List available models for the Text to Beast Mode service."""
     return auth.get("/ai/v1/settings/services/beastmode/models")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_text_beastmode_get_default_model() -> Any:
     """Get the default model configured for the Text to Beast Mode service."""
     return auth.get("/ai/v1/settings/services/beastmode/models/default")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_text_beastmode_run(
     body: Annotated[
         dict[str, Any],
@@ -297,19 +297,19 @@ def ai_text_beastmode_run(
 # AI Service Layer — Text Summarization
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_text_summarize_list_models() -> Any:
     """List available models for the Text Summarization service."""
     return auth.get("/ai/v1/settings/services/summarization/models")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_text_summarize_get_default_model() -> Any:
     """Get the default model configured for the Text Summarization service."""
     return auth.get("/ai/v1/settings/services/summarization/models/default")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_text_summarize_run(
     body: Annotated[
         dict[str, Any],
@@ -328,19 +328,19 @@ def ai_text_summarize_run(
 # AI Service Layer — Forecasting
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_forecasting_list_models() -> Any:
     """List available models for the Forecasting service."""
     return auth.get("/ai/v1/settings/services/forecasting/models")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_forecasting_get_default_model() -> Any:
     """Get the default model configured for the Forecasting service."""
     return auth.get("/ai/v1/settings/services/forecasting/models/default")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_forecasting_run(
     dataset_id: Annotated[str, "Dataset ID to run the forecast query against"],
     sql: Annotated[str, "SQL query selecting the date and value columns for forecasting"],
@@ -353,19 +353,19 @@ def ai_forecasting_run(
 # AI Service Layer — Image to Text
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_image_to_text_list_models() -> Any:
     """List available models for the Image to Text service."""
     return auth.get("/ai/v1/settings/services/image/models")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_image_to_text_get_default_model() -> Any:
     """Get the default model configured for the Image to Text service."""
     return auth.get("/ai/v1/settings/services/image/models/default")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_image_to_text_run(
     body: Annotated[
         dict[str, Any],
@@ -385,13 +385,13 @@ def ai_image_to_text_run(
 # AI Service Layer — General
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_get_settings() -> Any:
     """Get general AI service settings for the instance."""
     return auth.get("/ai/v1/settings/general")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_get_session(
     session_id: Annotated[str, "AI session ID (UUID)"],
 ) -> Any:
@@ -399,7 +399,7 @@ def ai_get_session(
     return auth.get(f"/ai/v1/sessions/{session_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_get_session_context(
     session_id: Annotated[str, "AI session ID (UUID)"],
 ) -> Any:
@@ -407,7 +407,7 @@ def ai_get_session_context(
     return auth.get(f"/ai/v1/sessions/{session_id}/context")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_ask_chat(
     body: Annotated[
         dict[str, Any],
@@ -429,13 +429,13 @@ def ai_ask_chat(
 # Jupyter Workspaces — File Shares
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_jupyter_list_file_shares() -> Any:
     """List all Jupyter file shares."""
     return auth.get("/fileshare/v1/shares")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_jupyter_get_file_share_perms(
     share_id: Annotated[str, "File share ID"],
 ) -> Any:
@@ -443,7 +443,7 @@ def ai_jupyter_get_file_share_perms(
     return auth.get(f"/fileshare/v1/shares/{share_id}/permissions")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_jupyter_create_file_share(
     name: Annotated[str, "File share name"],
     description: Annotated[str | None, "File share description"] = None,
@@ -458,7 +458,7 @@ def ai_jupyter_create_file_share(
     return auth.post("/fileshare/v1/shares", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_jupyter_update_file_share(
     share_id: Annotated[str, "File share ID"],
     body: Annotated[
@@ -474,7 +474,7 @@ def ai_jupyter_update_file_share(
     return auth.put(f"/fileshare/v1/shares/{share_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_jupyter_update_file_share_perms(
     share_id: Annotated[str, "File share ID"],
     share: Annotated[
@@ -495,7 +495,7 @@ def ai_jupyter_update_file_share_perms(
     return auth.post(f"/fileshare/v1/shares/{share_id}/permissions", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_jupyter_delete_file_share(
     share_id: Annotated[str, "File share ID to delete"],
 ) -> Any:
@@ -507,7 +507,7 @@ def ai_jupyter_delete_file_share(
 # Jupyter Workspaces
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_jupyter_list_workspaces(
     body: Annotated[
         dict[str, Any],
@@ -522,7 +522,7 @@ def ai_jupyter_list_workspaces(
     return auth.post("/datascience/v1/search/workspaces", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=True)
 def ai_jupyter_get_workspace(
     workspace_id: Annotated[str, "Jupyter workspace ID"],
 ) -> Any:
@@ -530,7 +530,7 @@ def ai_jupyter_get_workspace(
     return auth.get(f"/datascience/v1/workspaces/{workspace_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="ai_data_science", read_only=False)
 def ai_jupyter_update_workspace_owner(
     workspace_id: Annotated[str, "Jupyter workspace ID"],
     new_owner_id: Annotated[int, "New owner user ID"],

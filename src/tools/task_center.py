@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=True)
 def task_center_list_queues(
     combine_attributes: Annotated[bool | None, "Combine attributes in the response"] = None,
     archived: Annotated[bool | None, "Include archived queues"] = None,
@@ -19,7 +19,7 @@ def task_center_list_queues(
     return auth.get("/queues/v1", combineAttributes=combine_attributes, archived=archived)
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=True)
 def task_center_search_queues(
     body: Annotated[
         dict[str, Any],
@@ -30,7 +30,7 @@ def task_center_search_queues(
     return auth.post("/search/v1/query", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=True)
 def task_center_list_tasks(
     body: Annotated[
         dict[str, Any],
@@ -56,7 +56,7 @@ def task_center_list_tasks(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=True)
 def task_center_get_queue(
     queue_id: Annotated[str, "Queue ID (UUID)"],
 ) -> Any:
@@ -64,7 +64,7 @@ def task_center_get_queue(
     return auth.get(f"/queues/v1/{queue_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=True)
 def task_center_get_task(
     queue_id: Annotated[str, "Queue ID (UUID)"],
     task_id: Annotated[str, "Task ID"],
@@ -74,7 +74,7 @@ def task_center_get_task(
     return auth.get(f"/queues/v1/{queue_id}/tasks/{task_id}", render=render)
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=False)
 def task_center_save_task_progress(
     queue_id: Annotated[str, "Queue ID (UUID)"],
     task_id: Annotated[str, "Task ID"],
@@ -84,7 +84,7 @@ def task_center_save_task_progress(
     return auth.put(f"/queues/v1/{queue_id}/tasks/{task_id}/outputs", body=outputs)
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=False)
 def task_center_complete_task(
     queue_id: Annotated[str, "Queue ID (UUID)"],
     task_id: Annotated[str, "Task ID"],
@@ -98,7 +98,7 @@ def task_center_complete_task(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=False)
 def task_center_transfer_to_queue(
     current_queue_id: Annotated[str, "Current queue ID (UUID)"],
     task_id: Annotated[str, "Task ID"],
@@ -111,7 +111,7 @@ def task_center_transfer_to_queue(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=False)
 def task_center_transfer_to_user(
     queue_id: Annotated[str, "Queue ID (UUID)"],
     task_id: Annotated[str, "Task ID"],
@@ -126,7 +126,7 @@ def task_center_transfer_to_user(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=False)
 def task_center_void_task(
     queue_id: Annotated[str, "Queue ID (UUID)"],
     task_id: Annotated[str, "Task ID"],
@@ -135,7 +135,7 @@ def task_center_void_task(
     return auth.post(f"/queues/v1/{queue_id}/tasks/{task_id}/void")
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=False)
 def task_center_create_task(
     queue_id: Annotated[str, "Queue ID (UUID)"],
     body: Annotated[
@@ -147,7 +147,7 @@ def task_center_create_task(
     return auth.post(f"/queues/v1/{queue_id}/tasks", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=False)
 def task_center_update_queue_perms(
     queue_id: Annotated[str, "Queue ID (UUID)"],
     permissions: Annotated[
@@ -159,7 +159,7 @@ def task_center_update_queue_perms(
     return auth.post(f"/queues/v1/{queue_id}/permissions", body=permissions)
 
 
-@mcp.tool()
+@domo_tool(toolset="task_center", read_only=False)
 def task_center_update_queue_owner(
     queue_id: Annotated[str, "Queue ID (UUID)"],
     owner_id: Annotated[str, "New owner user ID"],

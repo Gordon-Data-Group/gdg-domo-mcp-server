@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_search(
     body: Annotated[
         dict[str, Any],
@@ -29,7 +29,7 @@ def cards_search(
     return auth.post("/search/v1/query", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_list_admin_summary(
     body: Annotated[
         dict[str, Any],
@@ -51,7 +51,7 @@ def cards_list_admin_summary(
     return auth.post("/content/v2/cards/adminsummary", body=body, limit=limit, skip=skip)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get(
     urns: Annotated[str, "Comma-separated card URNs (numeric IDs) to fetch"],
     parts: Annotated[str | None, "Comma-separated parts to include in the response"] = None,
@@ -61,7 +61,7 @@ def cards_get(
     return auth.get("/content/v1/cards", urns=urns, parts=parts, includeFiltered=include_filtered)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_notebook(
     card_id: Annotated[str, "Notebook card ID"],
 ) -> Any:
@@ -69,7 +69,7 @@ def cards_get_notebook(
     return auth.get(f"/content/v1/cards/notebook/{card_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_linked(
     card_id: Annotated[str, "Card ID"],
 ) -> Any:
@@ -77,7 +77,7 @@ def cards_get_linked(
     return auth.get(f"/content/v1/cards/{card_id}/link")
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_view_counts(
     urns: Annotated[list[int], "List of card URNs (numeric) to get view counts for"],
 ) -> Any:
@@ -85,7 +85,7 @@ def cards_get_view_counts(
     return auth.put("/content/v1/analytics/views/cards/counts", body={"urns": urns})
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_access(
     card_id: Annotated[str, "Card ID"],
     expand_users: Annotated[bool | None, "Expand group entries to show individual users"] = None,
@@ -94,7 +94,7 @@ def cards_get_access(
     return auth.get(f"/content/v1/share/accesslist/badge/{card_id}", expandUsers=expand_users)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_dataset_schema(
     card_id: Annotated[str, "Card ID"],
 ) -> Any:
@@ -102,7 +102,7 @@ def cards_get_dataset_schema(
     return auth.get(f"/content/v1/cards/{card_id}/details")
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_by_dataset(
     dataset_id: Annotated[str, "Dataset ID"],
     drill: Annotated[bool | None, "Include drill-path cards"] = None,
@@ -111,7 +111,7 @@ def cards_get_by_dataset(
     return auth.get(f"/content/v1/datasources/{dataset_id}/cards", drill=drill)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_min_max_dates(
     urns: Annotated[str, "Comma-separated card URNs to query"],
 ) -> Any:
@@ -119,7 +119,7 @@ def cards_get_min_max_dates(
     return auth.get("/content/v1/cards/minmaxdates", urns=urns)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_user_accessible(
     user_id: Annotated[str, "User ID"],
     limit: Annotated[int | None, "Max cards to return"] = None,
@@ -129,7 +129,7 @@ def cards_get_user_accessible(
     return auth.get(f"/content/v1/access/users/{user_id}/cards", limit=limit, offset=offset)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_chart_type_options(
     chart_type: Annotated[str, "Chart type identifier (e.g. 'badge_basic_table')"],
 ) -> Any:
@@ -137,13 +137,13 @@ def cards_get_chart_type_options(
     return auth.get(f"/content/v1/cards/kpi/{chart_type}/options")
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_color_palette() -> Any:
     """Get the global color palette available for card styling."""
     return auth.get("/content/v1/cards/kpi/palette")
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_validate_dataset_move(
     card_id: Annotated[str, "Card ID to validate"],
     dataset_id: Annotated[str, "Target dataset ID to move the card to"],
@@ -152,7 +152,7 @@ def cards_validate_dataset_move(
     return auth.get(f"/content/v1/cards/kpi/{card_id}/comparemove/{dataset_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_get_definition_for_update(
     urn: Annotated[str, "Card URN"],
     dynamic_text: Annotated[bool | None, "Include dynamic text definitions"] = None,
@@ -186,7 +186,7 @@ def cards_get_definition_for_update(
     return auth.put("/content/v3/cards/kpi/definition", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=True)
 def cards_render(
     card_id: Annotated[str, "Card ID"],
     body: Annotated[
@@ -204,7 +204,7 @@ def cards_render(
     return auth.put(f"/content/v1/cards/kpi/{card_id}/render", body=body, parts=parts)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_create(
     body: Annotated[
         dict[str, Any],
@@ -354,7 +354,7 @@ def cards_create(
     return auth.put("/content/v3/cards/kpi", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_create_notebook(
     title: Annotated[str, "Card title (shown in the page layout card list)"],
     page_id: Annotated[int, "Page ID to place the notebook card on"],
@@ -380,7 +380,7 @@ def cards_create_notebook(
     })
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_share_access(
     resources: Annotated[
         list[dict[str, Any]],
@@ -400,7 +400,7 @@ def cards_share_access(
     return auth.post("/content/v1/share", body=body, sendEmail=send_email)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_create_history_entry(
     card_id: Annotated[str, "Card ID"],
     changes: Annotated[
@@ -420,7 +420,7 @@ def cards_create_history_entry(
     return auth.post(f"/kpis/{card_id}/history", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_update(
     card_id: Annotated[str, "Card ID to update"],
     body: Annotated[
@@ -548,7 +548,7 @@ def cards_update(
     return auth.put(f"/content/v3/cards/kpi/{card_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_lock_unlock(
     card_id: Annotated[str, "Card ID"],
     locked: Annotated[bool, "True to lock the card, False to unlock it"],
@@ -557,7 +557,7 @@ def cards_lock_unlock(
     return auth.put(f"/content/v1/cards/{card_id}", body={"locked": locked})
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_bulk_add_to_pages(
     card_ids: Annotated[list[str], "List of card IDs to add"],
     destination_page_ids: Annotated[list[int], "List of page IDs to add the cards to"],
@@ -569,7 +569,7 @@ def cards_bulk_add_to_pages(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_move_to_pages(
     card_id: Annotated[str, "Card ID to move"],
     page_ids: Annotated[list[int], "List of page IDs the card should belong to (replaces current pages)"],
@@ -578,7 +578,7 @@ def cards_move_to_pages(
     return auth.put(f"/content/v1/cards/{card_id}/pages", body=page_ids)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_increment_views(
     urns: Annotated[list[str], "List of card URN strings to record views for"],
     context: Annotated[str, "View context ('AUTHENTICATED' or 'EMBEDDED')"] = "AUTHENTICATED",
@@ -587,7 +587,7 @@ def cards_increment_views(
     return auth.put("/content/v1/analytics/views/cards/increment", body={"urns": urns, "context": context})
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_update_owners(
     action: Annotated[str, "Ownership action: 'add' or 'remove'"],
     card_ids: Annotated[list[int], "List of card IDs to update"],
@@ -603,7 +603,7 @@ def cards_update_owners(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_remove_from_page(
     card_id: Annotated[str, "Card ID to remove"],
     page_id: Annotated[str, "Page ID to remove the card from"],
@@ -612,7 +612,7 @@ def cards_remove_from_page(
     return auth.post(f"/kpis/{card_id}/remove", pageid=page_id)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_remove_access(
     resource_id: Annotated[str, "Card ID to remove access from"],
     user_id: Annotated[str, "User ID to remove access for"],
@@ -621,7 +621,7 @@ def cards_remove_access(
     return auth.delete_root("/share/unsharekpiuser", resourceId=resource_id, userId=user_id)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_delete(
     card_ids: Annotated[str, "Comma-separated card IDs to delete"],
 ) -> Any:
@@ -629,7 +629,7 @@ def cards_delete(
     return auth.delete("/content/v1/cards/bulk", cardIds=card_ids)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_delete_drill_path(
     card_id: Annotated[str, "Card ID"],
     drill_number: Annotated[str, "Drill level number"],
@@ -643,16 +643,7 @@ def cards_delete_drill_path(
 # Problems (Issues)
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
-def cards_get_problems(
-    urns: Annotated[str, "Comma-separated card URNs to retrieve problems for"],
-    parts: Annotated[str | None, "Comma-separated parts to include (add 'problems' to get issues)"] = None,
-) -> Any:
-    """Get problem/issue records for one or more cards."""
-    return auth.get("/content/v1/cards", urns=urns, parts=parts)
-
-
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_create_problem(
     card_id: Annotated[str, "Card ID to attach the problem to"],
     message: Annotated[str, "Problem description text"],
@@ -661,7 +652,7 @@ def cards_create_problem(
     return auth.post(f"/content/v1/badges/{card_id}/problems", body=message)
 
 
-@mcp.tool()
+@domo_tool(toolset="cards", read_only=False)
 def cards_resolve_problem(
     card_id: Annotated[str, "Card ID"],
     problem_id: Annotated[str, "Problem ID to resolve"],

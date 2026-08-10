@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=True)
 def scheduled_reports_list(
     filter: Annotated[str | None, "Filter term"] = None,
     is_ascending: Annotated[bool | None, "Sort ascending"] = None,
@@ -25,7 +25,7 @@ def scheduled_reports_list(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=True)
 def scheduled_reports_list_resources(
     limit: Annotated[int | None, "Max results to return"] = None,
     skip: Annotated[int | None, "Pagination offset"] = None,
@@ -34,7 +34,7 @@ def scheduled_reports_list_resources(
     return auth.get("/content/v1/reportschedules/resources", limit=limit, skip=skip)
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=True)
 def scheduled_reports_get(
     report_id: Annotated[str, "Scheduled report ID"],
 ) -> Any:
@@ -42,7 +42,7 @@ def scheduled_reports_get(
     return auth.get(f"/content/v1/reportschedules/{report_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=True)
 def scheduled_reports_get_history(
     report_id: Annotated[str, "Scheduled report ID"],
     limit: Annotated[int | None, "Max results to return"] = None,
@@ -56,7 +56,7 @@ def scheduled_reports_get_history(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=True)
 def scheduled_reports_get_for_resource(
     resource_type: Annotated[str, "Resource type (e.g. 'CARD')"],
     resource_id: Annotated[str, "Resource ID"],
@@ -73,7 +73,7 @@ def scheduled_reports_get_for_resource(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=True)
 def scheduled_reports_get_view(
     view_id: Annotated[str, "View ID"],
 ) -> Any:
@@ -81,7 +81,7 @@ def scheduled_reports_get_view(
     return auth.get(f"/content/v2/views/{view_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=True)
 def scheduled_reports_search_history(
     body: Annotated[
         dict[str, Any],
@@ -99,7 +99,7 @@ def scheduled_reports_search_history(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=False)
 def scheduled_reports_send_now(
     report_id: Annotated[str, "Scheduled report ID"],
     recipients: Annotated[
@@ -111,7 +111,7 @@ def scheduled_reports_send_now(
     return auth.post(f"/content/v1/reportschedules/{report_id}/sendnow", body=recipients)
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=False)
 def scheduled_reports_create(
     body: Annotated[
         dict[str, Any],
@@ -122,7 +122,7 @@ def scheduled_reports_create(
     return auth.post("/content/v1/reportschedules", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=False)
 def scheduled_reports_create_view(
     body: Annotated[
         dict[str, Any],
@@ -133,7 +133,7 @@ def scheduled_reports_create_view(
     return auth.post("/content/v2/views", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=False)
 def scheduled_reports_update(
     report_id: Annotated[str, "Scheduled report ID"],
     body: Annotated[dict[str, Any], "Full scheduled report object to replace"],
@@ -142,7 +142,7 @@ def scheduled_reports_update(
     return auth.put(f"/content/v1/reportschedules/{report_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=False)
 def scheduled_reports_enable_disable(
     report_id: Annotated[str, "Scheduled report ID"],
     enabled: Annotated[bool, "True to enable, False to disable"],
@@ -151,7 +151,7 @@ def scheduled_reports_enable_disable(
     return auth.put(f"/content/v1/reportschedules/{report_id}/enabled", body=enabled)
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=False)
 def scheduled_reports_update_view(
     view_id: Annotated[str, "View ID"],
     body: Annotated[dict[str, Any], "Full view object to replace"],
@@ -160,7 +160,7 @@ def scheduled_reports_update_view(
     return auth.put(f"/content/v2/views/{view_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=False)
 def scheduled_reports_delete(
     report_id: Annotated[str, "Scheduled report ID to delete"],
 ) -> Any:
@@ -168,7 +168,7 @@ def scheduled_reports_delete(
     return auth.delete(f"/content/v1/reportschedules/{report_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=False)
 def scheduled_reports_resubscribe(
     report_id: Annotated[str, "Scheduled report ID"],
 ) -> Any:
@@ -176,7 +176,7 @@ def scheduled_reports_resubscribe(
     return auth.delete(f"/content/v1/reportschedules/{report_id}/unsubscribe/recipient")
 
 
-@mcp.tool()
+@domo_tool(toolset="scheduled_reports", read_only=False)
 def scheduled_reports_unsubscribe(
     report_id: Annotated[str, "Scheduled report ID"],
 ) -> Any:

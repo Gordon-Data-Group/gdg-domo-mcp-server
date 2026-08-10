@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_list(
     filter_key_results: Annotated[bool | None, "Filter to objectives with key results"] = None,
     period_id: Annotated[int | None, "Period ID to filter by"] = None,
@@ -25,7 +25,7 @@ def objectives_list(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_list_personal(
     filter_key_results: Annotated[bool | None, "Filter to objectives with key results"] = None,
     include_sample_goal: Annotated[bool | None, "Include sample goal"] = None,
@@ -44,7 +44,7 @@ def objectives_list_personal(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_list_team(
     filter_key_results: Annotated[bool | None, "Filter to objectives with key results"] = None,
     owner_id: Annotated[int | None, "Owner user ID"] = None,
@@ -59,7 +59,7 @@ def objectives_list_team(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_list_periods(
     all: Annotated[bool | None, "Include all periods (past and future)"] = None,
 ) -> Any:
@@ -67,13 +67,13 @@ def objectives_list_periods(
     return auth.get("/social/v1/objectives/periods", all=all)
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_list_events() -> Any:
     """List objective events."""
     return auth.get("/social/v1/objectives/events")
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_list_tags(
     all: Annotated[bool | None, "Include all tags"] = None,
 ) -> Any:
@@ -81,7 +81,7 @@ def objectives_list_tags(
     return auth.get("/social/v1/objectives/tags", all=all)
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_list_tag_categories(
     all: Annotated[bool | None, "Include all tag categories"] = None,
 ) -> Any:
@@ -89,7 +89,7 @@ def objectives_list_tag_categories(
     return auth.get("/social/v1/objectives/tags/categories", all=all)
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_list_needs_update(
     filter_key_results: Annotated[bool | None, "Filter to objectives with key results"] = None,
     period_id: Annotated[int | None, "Period ID"] = None,
@@ -104,7 +104,7 @@ def objectives_list_needs_update(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_list_drafts(
     filter_key_results: Annotated[bool | None, "Filter to objectives with key results"] = None,
     period_id: Annotated[int | None, "Period ID"] = None,
@@ -119,7 +119,7 @@ def objectives_list_drafts(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_get_company_report(
     filter_key_results: Annotated[bool | None, "Filter to objectives with key results"] = None,
     period_id: Annotated[int | None, "Period ID"] = None,
@@ -134,7 +134,7 @@ def objectives_get_company_report(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_get_key_result_chart(
     key_result_id: Annotated[str, "Key result ID"],
 ) -> Any:
@@ -142,7 +142,7 @@ def objectives_get_key_result_chart(
     return auth.get(f"/social/v1/objectives/key-results/{key_result_id}/chart")
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=True)
 def objectives_get_key_result_values(
     key_result_id: Annotated[str, "Key result ID"],
 ) -> Any:
@@ -150,7 +150,7 @@ def objectives_get_key_result_values(
     return auth.get(f"/social/v1/objectives/key-results/{key_result_id}/values")
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_create(
     body: Annotated[
         dict[str, Any],
@@ -161,7 +161,7 @@ def objectives_create(
     return auth.post("/social/v1/objectives", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_create_key_result(
     body: Annotated[
         dict[str, Any],
@@ -172,7 +172,7 @@ def objectives_create_key_result(
     return auth.post("/social/v1/objectives/key-results", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_create_tag(
     name: Annotated[str, "Tag name"],
     category_id: Annotated[int | None, "Category ID"] = None,
@@ -185,7 +185,7 @@ def objectives_create_tag(
     return auth.post("/social/v1/objectives/tags", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_create_tag_category(
     name: Annotated[str, "Category name"],
 ) -> Any:
@@ -193,7 +193,7 @@ def objectives_create_tag_category(
     return auth.post("/social/v1/objectives/tags/categories", body={"name": name})
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_update(
     objective_id: Annotated[str, "Objective ID"],
     body: Annotated[dict[str, Any], "Full objective object to replace"],
@@ -203,7 +203,7 @@ def objectives_update(
     return auth.put(f"/social/v1/objectives/{objective_id}", body=body, periodId=period_id)
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_update_key_result(
     key_result_id: Annotated[str, "Key result ID"],
     body: Annotated[dict[str, Any], "Full key result object to replace"],
@@ -212,7 +212,7 @@ def objectives_update_key_result(
     return auth.put(f"/social/v1/objectives/key-results/{key_result_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_update_key_result_tags(
     key_result_id: Annotated[str, "Key result ID"],
     tag_ids: Annotated[list[int], "List of tag IDs to assign"],
@@ -226,7 +226,7 @@ def objectives_update_key_result_tags(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_update_tag(
     tag_id: Annotated[str, "Tag ID"],
     body: Annotated[dict[str, Any], "Tag update. Keys: id (int), name (str), category ({id, name})"],
@@ -235,7 +235,7 @@ def objectives_update_tag(
     return auth.put(f"/social/v1/objectives/tags/{tag_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_update_tag_category(
     category_id: Annotated[str, "Category ID"],
     body: Annotated[dict[str, Any], "Category update. Keys: id (int), name (str)"],
@@ -244,7 +244,7 @@ def objectives_update_tag_category(
     return auth.put(f"/social/v1/objectives/tags/categories/{category_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_delete(
     objective_id: Annotated[str, "Objective ID to delete"],
 ) -> Any:
@@ -252,7 +252,7 @@ def objectives_delete(
     return auth.delete(f"/social/v1/objectives/{objective_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_delete_key_result(
     key_result_id: Annotated[str, "Key result ID to delete"],
 ) -> Any:
@@ -260,7 +260,7 @@ def objectives_delete_key_result(
     return auth.delete(f"/social/v1/objectives/key-results/{key_result_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_delete_tag(
     tag_id: Annotated[str, "Tag ID to delete"],
 ) -> Any:
@@ -268,7 +268,7 @@ def objectives_delete_tag(
     return auth.delete(f"/social/v1/objectives/tags/{tag_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="objectives", read_only=False)
 def objectives_delete_tag_category(
     category_id: Annotated[str, "Category ID to delete"],
 ) -> Any:

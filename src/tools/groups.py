@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=True)
 def groups_list(
     ascending: Annotated[bool | None, "Sort ascending"] = None,
     sort: Annotated[str | None, "Sort field"] = None,
@@ -45,7 +45,7 @@ def groups_list(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=True)
 def groups_get_bulk(
     group_ids: Annotated[list[str], "List of group IDs to fetch"],
     include_active: Annotated[bool | None, "Include active status"] = None,
@@ -60,7 +60,7 @@ def groups_get_bulk(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=True)
 def groups_get(
     group_id: Annotated[str, "Group ID"],
 ) -> Any:
@@ -68,7 +68,7 @@ def groups_get(
     return auth.get(f"/content/v2/groups/{group_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=True)
 def groups_get_permissions(
     group_id: Annotated[str, "Group ID"],
     check_ownership: Annotated[bool | None, "Check ownership"] = None,
@@ -82,7 +82,7 @@ def groups_get_permissions(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=True)
 def groups_get_avatar(
     group_id: Annotated[str, "Group ID"],
     size: Annotated[str | None, "Avatar size"] = None,
@@ -100,7 +100,7 @@ def groups_get_avatar(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=False)
 def groups_create(
     name: Annotated[str, "Group name"],
     type: Annotated[str | None, "Group type (e.g. 'dynamic')"] = None,
@@ -115,7 +115,7 @@ def groups_create(
     return auth.post("/content/v2/groups", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=False)
 def groups_add_or_remove_owners(
     changes: Annotated[
         list[dict[str, Any]],
@@ -126,7 +126,7 @@ def groups_add_or_remove_owners(
     return auth.put("/content/v2/groups/access", body=changes)
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=False)
 def groups_add_members(
     changes: Annotated[
         list[dict[str, Any]],
@@ -137,7 +137,7 @@ def groups_add_members(
     return auth.put("/content/v2/groups/access", body=changes)
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=False)
 def groups_update_dynamic_rules(
     updates: Annotated[
         list[dict[str, Any]],
@@ -148,7 +148,7 @@ def groups_update_dynamic_rules(
     return auth.put("/content/v2/groups", body=updates)
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=False)
 def groups_delete(
     group_id: Annotated[str, "Group ID to delete"],
 ) -> Any:
@@ -156,7 +156,7 @@ def groups_delete(
     return auth.delete(f"/content/v2/groups/{group_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="groups", read_only=False)
 def groups_bulk_delete(
     group_ids: Annotated[list[int], "List of group IDs to delete"],
 ) -> Any:

@@ -6,13 +6,13 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
 # ── Core DataSets ─────────────────────────────────────────────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_search(
     body: Annotated[dict[str, Any], "Search body. Key fields: query (wildcard string), filters (list), count (int), offset (int), sort"],
 ) -> Any:
@@ -20,7 +20,7 @@ def datasets_search(
     return auth.post("/data/ui/v3/datasources/search", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_list(
     limit: Annotated[int | None, "Max datasets to return"] = None,
     offset: Annotated[int | None, "Pagination offset"] = None,
@@ -51,13 +51,13 @@ def datasets_list(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_list_tags() -> Any:
     """List all tags that exist on any DataSet in the instance."""
     return auth.get("/data/ui/v3/datasources/search/tags/all")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_bulk(
     dataset_ids: Annotated[list[str], "List of dataset UUIDs to fetch"],
     include_private: Annotated[bool | None, "Include private datasets"] = None,
@@ -72,7 +72,7 @@ def datasets_get_bulk(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_owned_by(
     owners: Annotated[list[dict[str, Any]], "Owner filter list, e.g. [{'id': 1234, 'type': 'USER'}] or [{'id': 5, 'type': 'GROUP'}]"],
 ) -> Any:
@@ -80,7 +80,7 @@ def datasets_get_owned_by(
     return auth.post("/data/ui/v3/datasources/ownedBy", body=owners)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get(
     dataset_id: Annotated[str, "Dataset UUID"],
     include_all_details: Annotated[bool | None, "Include full schema and connector metadata"] = None,
@@ -94,7 +94,7 @@ def datasets_get(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_saved_filters(
     query_profile: Annotated[str | None, "Filter profile name, e.g. 'DATACENTER'"] = None,
 ) -> Any:
@@ -102,7 +102,7 @@ def datasets_get_saved_filters(
     return auth.get("/search/v1/saved", queryProfile=query_profile)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_lineage(
     dataset_id: Annotated[str, "Dataset UUID"],
     traverse_up: Annotated[bool | None, "Include upstream source dependencies"] = None,
@@ -120,7 +120,7 @@ def datasets_get_lineage(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_impact_counts(
     dataset_id: Annotated[str, "Dataset UUID"],
 ) -> Any:
@@ -128,7 +128,7 @@ def datasets_get_impact_counts(
     return auth.get(f"/data/v1/impacts/DATA_SOURCE/{dataset_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_schema(
     dataset_id: Annotated[str, "Dataset UUID"],
     include_hidden: Annotated[bool | None, "Include hidden/system columns"] = None,
@@ -140,7 +140,7 @@ def datasets_get_schema(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_wrangle(
     dataset_id: Annotated[str, "Dataset UUID"],
 ) -> Any:
@@ -148,7 +148,7 @@ def datasets_get_wrangle(
     return auth.get(f"/query/v1/datasources/{dataset_id}/wrangle")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_query(
     dataset_id: Annotated[str, "Dataset UUID"],
     body: Annotated[dict[str, Any], "Structured query body. Must contain a 'query' object with columns, limit/offset, and optional where/groupByColumns/orderByColumns. See API docs for full schema."],
@@ -157,7 +157,7 @@ def datasets_query(
     return auth.post(f"/query/v1/execute/{dataset_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_query_sql(
     dataset_id: Annotated[str, "Dataset UUID"],
     sql: Annotated[str, "SQL SELECT statement to run against the dataset"],
@@ -166,7 +166,7 @@ def datasets_query_sql(
     return auth.post(f"/query/v1/execute/{dataset_id}", body={"sql": sql})
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_query_preview(
     body: Annotated[dict[str, Any], "Views Explorer query-preview body with schema, query, viewTemplate, and tableAliases fields"],
 ) -> Any:
@@ -174,7 +174,7 @@ def datasets_query_preview(
     return auth.post("/query/v1/views/query-preview", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_create_view(
     body: Annotated[dict[str, Any], "View definition with dataSourceName, schema (tables + viewTemplate), trigger (source datasetId), and responsibleUserId"],
 ) -> Any:
@@ -182,7 +182,7 @@ def datasets_create_view(
     return auth.post("/query/v1/views", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_bulk_add_tags(
     dataset_ids: Annotated[list[str], "List of dataset UUIDs to tag"],
     tags: Annotated[list[str], "Tags to add to all specified datasets"],
@@ -197,7 +197,7 @@ def datasets_bulk_add_tags(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_defrost(
     dataset_id: Annotated[str, "UUID of the vaulted (frozen) dataset to restore"],
 ) -> Any:
@@ -205,7 +205,7 @@ def datasets_defrost(
     return auth.post(f"/data/ui/v3/datasources/{dataset_id}/defrost")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_share(
     dataset_id: Annotated[str, "Dataset UUID"],
     permissions: Annotated[list[dict[str, Any]], "Permission objects, e.g. [{'type': 'USER', 'id': '123', 'accessLevel': 'CAN_SHARE'}]. accessLevel: CAN_VIEW, CAN_SHARE, CAN_EDIT, OWNER"],
@@ -218,7 +218,7 @@ def datasets_share(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_append_webhook(
     dataset_id: Annotated[str, "UUID of the Webhook DataSet to append data to"],
 ) -> Any:
@@ -226,7 +226,7 @@ def datasets_append_webhook(
     return auth.post(f"/iot/v1/webhook/data/{dataset_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_update_wrangle(
     dataset_id: Annotated[str, "Dataset UUID"],
     columns: Annotated[list[dict[str, Any]], "Column definitions. Each object: {name, id, type, visible, order, referenceDataSourceId, invalid, newName}"],
@@ -238,7 +238,7 @@ def datasets_update_wrangle(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_update_name_description(
     dataset_id: Annotated[str, "Dataset UUID"],
     name: Annotated[str, "New dataset name"],
@@ -251,7 +251,7 @@ def datasets_update_name_description(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_update_owner(
     dataset_id: Annotated[str, "Dataset UUID"],
     user_id: Annotated[str, "User ID (as string) of the new responsible owner"],
@@ -263,7 +263,7 @@ def datasets_update_owner(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_bulk_update_owners(
     user_id: Annotated[str, "User ID who will become owner of all specified datasets"],
     dataset_ids: Annotated[list[str], "List of dataset UUIDs to reassign"],
@@ -275,7 +275,7 @@ def datasets_bulk_update_owners(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_bulk_update_owners_v1(
     dataset_ids: Annotated[list[str], "List of dataset UUIDs to reassign"],
     user_id: Annotated[int | None, "User ID of the new owner (provide user_id or group_id, not both)"] = None,
@@ -290,7 +290,7 @@ def datasets_bulk_update_owners_v1(
     return auth.post("/data/v1/ui/bulk/reassign", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_bulk_delete(
     dataset_ids: Annotated[list[str], "List of dataset UUIDs to delete"],
 ) -> Any:
@@ -301,7 +301,7 @@ def datasets_bulk_delete(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_update_tags(
     dataset_id: Annotated[str, "Dataset UUID"],
     tags: Annotated[list[str], "Complete replacement tag list — this overwrites all existing tags on the dataset"],
@@ -310,7 +310,7 @@ def datasets_update_tags(
     return auth.post(f"/data/ui/v3/datasources/{dataset_id}/tags", body=tags)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_sync_cloud_amplifier(
     cloud_id: Annotated[str, "Cloud Amplifier account/cloud ID to refresh"],
 ) -> Any:
@@ -318,7 +318,7 @@ def datasets_sync_cloud_amplifier(
     return auth.put(f"/query/v1/byos/accounts/{cloud_id}/polling/refresh")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_delete(
     dataset_id: Annotated[str, "Dataset UUID"],
     delete_method: Annotated[str | None, "Deletion method: 'HARD' (permanent) or 'SOFT' (recoverable). Defaults to SOFT."] = None,
@@ -327,7 +327,7 @@ def datasets_delete(
     return auth.delete(f"/data/v3/datasources/{dataset_id}", deleteMethod=delete_method)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_delete_check(
     dataset_ids: Annotated[list[str], "Dataset UUIDs to check before deletion"],
 ) -> Any:
@@ -340,7 +340,7 @@ def datasets_delete_check(
 
 # ── Streams ───────────────────────────────────────────────────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def streams_get(
     stream_id: Annotated[int, "Stream ID (integer)"],
     fields: Annotated[str | None, "Comma-separated list of fields to include in the response"] = None,
@@ -349,7 +349,7 @@ def streams_get(
     return auth.get(f"/data/v1/streams/{stream_id}", fields=fields)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def streams_get_executions(
     stream_id: Annotated[int, "Stream ID"],
 ) -> Any:
@@ -357,7 +357,7 @@ def streams_get_executions(
     return auth.get(f"/data/v1/streams/{stream_id}/executions")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def streams_get_execution(
     stream_id: Annotated[int, "Stream ID"],
     execution_id: Annotated[int, "Execution ID"],
@@ -366,7 +366,7 @@ def streams_get_execution(
     return auth.get(f"/data/v1/streams/{stream_id}/executions/{execution_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def streams_create(
     body: Annotated[dict[str, Any], "Stream definition. Required: dataSource (name, description), updateMethod (REPLACE/APPEND), transport, dataProvider, account. Optional: scheduleExpression, configuration."],
 ) -> Any:
@@ -374,7 +374,7 @@ def streams_create(
     return auth.post("/data/v1/streams", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def streams_run(
     stream_id: Annotated[int, "Stream ID to trigger"],
 ) -> Any:
@@ -382,7 +382,7 @@ def streams_run(
     return auth.post(f"/data/v1/streams/{stream_id}/executions")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def streams_update(
     stream_id: Annotated[int, "Stream ID"],
     body: Annotated[dict[str, Any], "Updated stream definition. Must include id, dataSource, dataProvider, and schedule fields. See streams_get for current values."],
@@ -391,7 +391,7 @@ def streams_update(
     return auth.put(f"/data/v1/streams/{stream_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def streams_abort(
     stream_id: Annotated[int, "Stream ID"],
     execution_id: Annotated[int, "Execution ID to abort"],
@@ -406,7 +406,7 @@ def streams_abort(
 
 # ── AI Readiness / Data Dictionary ────────────────────────────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_data_dictionary(
     dataset_id: Annotated[str, "Dataset UUID"],
 ) -> Any:
@@ -414,7 +414,7 @@ def datasets_get_data_dictionary(
     return auth.get(f"/ai/readiness/v1/data-dictionary/dataset/{dataset_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_create_data_dictionary(
     dataset_id: Annotated[str, "Dataset UUID"],
     body: Annotated[dict[str, Any], "Dictionary body: {name, description, unitOfAnalysis, columns: [{name, description, synonyms, agentEnabled, beastmodeId}]}"],
@@ -423,7 +423,7 @@ def datasets_create_data_dictionary(
     return auth.post(f"/ai/readiness/v1/data-dictionary/dataset/{dataset_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_update_data_dictionary(
     dataset_id: Annotated[str, "Dataset UUID"],
     body: Annotated[dict[str, Any], "Updated dictionary body: {id, datasetId, name, description, columns: [{columnId, name, description, synonyms, agentEnabled}]}. Omit columnId to add a new column entry."],
@@ -434,7 +434,7 @@ def datasets_update_data_dictionary(
 
 # ── Data Repair ───────────────────────────────────────────────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_list_data_versions(
     dataset_id: Annotated[str, "Dataset UUID"],
 ) -> Any:
@@ -442,7 +442,7 @@ def datasets_list_data_versions(
     return auth.get(f"/data/v3/datasources/{dataset_id}/dataversions/details")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_list_data_versions_v2(
     dataset_id: Annotated[str, "Dataset UUID"],
 ) -> Any:
@@ -450,7 +450,7 @@ def datasets_list_data_versions_v2(
     return auth.get(f"/data/v2/datasources/{dataset_id}/dataversions")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_data_version(
     dataset_id: Annotated[str, "Dataset UUID"],
     version_id: Annotated[str, "Data version ID from datasets_list_data_versions"],
@@ -465,7 +465,7 @@ def datasets_get_data_version(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_insert_data_version(
     dataset_id: Annotated[str, "Dataset UUID"],
     repair_data_version_id: Annotated[str | None, "Version ID to restore as the current data"] = None,
@@ -479,7 +479,7 @@ def datasets_insert_data_version(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_delete_data_versions(
     dataset_id: Annotated[str, "Dataset UUID"],
     version_ids: Annotated[list[int], "List of data version IDs (integers) to permanently delete"],
@@ -493,7 +493,7 @@ def datasets_delete_data_versions(
 
 # ── PDP — Column ──────────────────────────────────────────────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_column_pdp_policies(
     dataset_id: Annotated[str, "Dataset UUID"],
 ) -> Any:
@@ -501,7 +501,7 @@ def datasets_get_column_pdp_policies(
     return auth.get(f"/query/v2/data-control/{dataset_id}/policy-group")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_column_pdp_mapping(
     dataset_id: Annotated[str, "Dataset UUID"],
 ) -> Any:
@@ -511,7 +511,7 @@ def datasets_get_column_pdp_mapping(
 
 # ── PDP — Row ─────────────────────────────────────────────────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_row_pdp_policies(
     dataset_id: Annotated[str, "Dataset UUID"],
     options: Annotated[str | None, "Optional filter string"] = None,
@@ -523,7 +523,7 @@ def datasets_get_row_pdp_policies(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_create_row_pdp_policy(
     dataset_id: Annotated[str, "Dataset UUID"],
     body: Annotated[dict[str, Any], "Policy body: {name, dataSourceId, userIds, groupIds, dataSourcePermissions, parameters: [{type, name, values, operator, ignoreCase}]}"],
@@ -532,7 +532,7 @@ def datasets_create_row_pdp_policy(
     return auth.post(f"/query/v1/data-control/{dataset_id}/filter-groups", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_update_row_pdp_policy(
     dataset_id: Annotated[str, "Dataset UUID"],
     policy_id: Annotated[str, "Row PDP policy (filter group) ID to update"],
@@ -545,7 +545,7 @@ def datasets_update_row_pdp_policy(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_delete_row_pdp_policy(
     dataset_id: Annotated[str, "Dataset UUID"],
     policy_id: Annotated[str, "Row PDP policy (filter group) ID to delete"],
@@ -556,7 +556,7 @@ def datasets_delete_row_pdp_policy(
 
 # ── PDP — Status ──────────────────────────────────────────────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_pdp_status(
     dataset_id: Annotated[str, "Dataset UUID"],
 ) -> Any:
@@ -564,7 +564,7 @@ def datasets_get_pdp_status(
     return auth.get(f"/query/v2/data-control/{dataset_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_pdp_impacted_resources(
     dataset_id: Annotated[str, "Dataset UUID"],
 ) -> Any:
@@ -572,7 +572,7 @@ def datasets_get_pdp_impacted_resources(
     return auth.get(f"/data/v3/datasources/{dataset_id}/impacted-resources")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_enable_disable_pdp(
     dataset_id: Annotated[str, "Dataset UUID"],
     enabled: Annotated[bool, "True to enable Row PDP, False to disable"],
@@ -594,7 +594,7 @@ def datasets_enable_disable_pdp(
 
 # ── Uploads (multi-part) ──────────────────────────────────────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_create_upload(
     dataset_id: Annotated[str, "Dataset UUID to upload data into"],
     action: Annotated[str, "Upload action: 'REPLACE' to overwrite all data or 'APPEND' to add rows"] = "REPLACE",
@@ -608,7 +608,7 @@ def datasets_create_upload(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_upload_part(
     dataset_id: Annotated[str, "Dataset UUID"],
     upload_id: Annotated[str, "Upload session ID returned by datasets_create_upload"],
@@ -623,7 +623,7 @@ def datasets_upload_part(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_commit_upload(
     dataset_id: Annotated[str, "Dataset UUID"],
     upload_id: Annotated[str, "Upload session ID returned by datasets_create_upload"],
@@ -640,7 +640,7 @@ def datasets_commit_upload(
 
 # ── File upload (create PUSH dataset from file) ───────────────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_upload_file(
     file_path: Annotated[str, "Absolute path to a local CSV or XLSX file"],
     dataset_name: Annotated[str | None, "Dataset display name. Defaults to the filename stem."] = None,
@@ -777,7 +777,7 @@ def datasets_upload_file(
 
 # ── File export (download dataset data to a local file) ───────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_export(
     dataset_id: Annotated[str, "Dataset UUID"],
     file_path: Annotated[str, "Absolute local path to write the exported file to, e.g. /Users/me/exports/data.csv"],
@@ -822,7 +822,7 @@ def datasets_export(
 
 # ── Webforms ──────────────────────────────────────────────────────────────────
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=True)
 def datasets_get_webform_data(
     dataset_id: Annotated[str, "UUID of the Webform DataSet"],
 ) -> Any:
@@ -830,7 +830,7 @@ def datasets_get_webform_data(
     return auth.get(f"/data/v2/webforms/{dataset_id}/grid")
 
 
-@mcp.tool()
+@domo_tool(toolset="datasets", read_only=False)
 def datasets_update_webform_data(
     stream_id: Annotated[str, "Stream ID of the Webform DataSet"],
     name: Annotated[str, "Dataset name"],

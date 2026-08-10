@@ -6,17 +6,17 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="reports", read_only=True)
 def reports_list() -> Any:
     """List all slideshow publication reports."""
     return auth.get("/content/v1/reports")
 
 
-@mcp.tool()
+@domo_tool(toolset="reports", read_only=False)
 def reports_create(
     body: Annotated[
         dict[str, Any],
@@ -31,7 +31,7 @@ def reports_create(
     return auth.post("/content/v1/reports", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="reports", read_only=False)
 def reports_update(
     report_id: Annotated[str, "Report ID"],
     body: Annotated[
@@ -48,7 +48,7 @@ def reports_update(
     return auth.put(f"/content/v1/reports/{report_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="reports", read_only=False)
 def reports_delete(
     report_id: Annotated[str, "Report ID to delete"],
 ) -> Any:

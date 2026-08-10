@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="functions", read_only=True)
 def functions_list(
     body: Annotated[
         dict[str, Any],
@@ -21,7 +21,7 @@ def functions_list(
     return auth.post("/query/v1/functions/search", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="functions", read_only=True)
 def functions_get_bulk(
     ids: Annotated[list[str], "List of function IDs to fetch"],
 ) -> Any:
@@ -29,7 +29,7 @@ def functions_get_bulk(
     return auth.post("/query/v1/functions/list/id", body={"ids": ids})
 
 
-@mcp.tool()
+@domo_tool(toolset="functions", read_only=True)
 def functions_get(
     function_id: Annotated[str, "Function ID"],
     hidden: Annotated[bool | None, "Include hidden functions"] = None,
@@ -38,7 +38,7 @@ def functions_get(
     return auth.get(f"/query/v1/functions/template/{function_id}", hidden=hidden)
 
 
-@mcp.tool()
+@domo_tool(toolset="functions", read_only=True)
 def functions_get_card_usage(
     datasource_id: Annotated[str | None, "Dataset ID to filter by"] = None,
     formula_id: Annotated[str | None, "Function ID to filter by"] = None,
@@ -51,7 +51,7 @@ def functions_get_card_usage(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="functions", read_only=False)
 def functions_create(
     body: Annotated[
         dict[str, Any],
@@ -69,7 +69,7 @@ def functions_create(
     return auth.post("/query/v1/functions/template", body=body, strict=strict)
 
 
-@mcp.tool()
+@domo_tool(toolset="functions", read_only=False)
 def functions_update(
     function_id: Annotated[str, "Function ID"],
     body: Annotated[
@@ -82,7 +82,7 @@ def functions_update(
     return auth.put(f"/query/v1/functions/template/{function_id}", body=body, strict=strict)
 
 
-@mcp.tool()
+@domo_tool(toolset="functions", read_only=False)
 def functions_lock(
     function_id: Annotated[str, "Function ID"],
     locked: Annotated[bool, "True to lock, False to unlock"],
@@ -91,7 +91,7 @@ def functions_lock(
     return auth.put(f"/query/v1/functions/template/{function_id}", body={"locked": locked})
 
 
-@mcp.tool()
+@domo_tool(toolset="functions", read_only=False)
 def functions_delete(
     function_id: Annotated[str, "Function ID to delete"],
 ) -> Any:
@@ -99,7 +99,7 @@ def functions_delete(
     return auth.delete(f"/query/v1/functions/template/{function_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="functions", read_only=False)
 def functions_bulk_delete(
     function_ids: Annotated[list[int], "List of function IDs to delete"],
 ) -> Any:

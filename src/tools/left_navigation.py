@@ -6,17 +6,17 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="left_navigation", read_only=True)
 def left_navigation_get_pins() -> Any:
     """Get the current user's left navigation pins."""
     return auth.get("/nav/v1/pins")
 
 
-@mcp.tool()
+@domo_tool(toolset="left_navigation", read_only=False)
 def left_navigation_create_pin(
     body: Annotated[
         dict[str, Any],
@@ -30,7 +30,7 @@ def left_navigation_create_pin(
     return auth.post("/nav/v1/pins/append", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="left_navigation", read_only=False)
 def left_navigation_update_pins(
     pins: Annotated[
         list[dict[str, Any]],
