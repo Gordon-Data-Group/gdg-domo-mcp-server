@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=True)
 def users_search(
     body: Annotated[
         dict[str, Any],
@@ -29,7 +29,7 @@ def users_search(
     return auth.post("/identity/v1/users/search", body=body, explain=explain)
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=True)
 def users_list(
     limit: Annotated[int | None, "Max users to return"] = None,
     offset: Annotated[int | None, "Pagination offset"] = None,
@@ -39,7 +39,7 @@ def users_list(
     return auth.get("/identity/v1/users/", limit=limit, offset=offset, attributes=attributes)
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=True)
 def users_list_v3(
     limit: Annotated[int | None, "Max users to return"] = None,
     offset: Annotated[int | None, "Pagination offset"] = None,
@@ -49,7 +49,7 @@ def users_list_v3(
     return auth.get("/content/v3/users/", limit=limit, offset=offset, active=active)
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=True)
 def users_get_bulk(
     cv_user_ids: Annotated[str, "Comma-separated list of user IDs to fetch"],
 ) -> Any:
@@ -57,7 +57,7 @@ def users_get_bulk(
     return auth.get_root("/users/index", cvUserIds=cv_user_ids)
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=True)
 def users_get(
     user_id: Annotated[str, "User ID"],
     attributes: Annotated[str | None, "Comma-separated list of attributes to return"] = None,
@@ -67,7 +67,7 @@ def users_get(
     return auth.get(f"/identity/v1/users/{user_id}", attributes=attributes, parts=parts)
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=True)
 def users_get_v2(
     user_id: Annotated[str, "User ID"],
 ) -> Any:
@@ -75,7 +75,7 @@ def users_get_v2(
     return auth.get(f"/content/v2/users/{user_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=True)
 def users_get_v3(
     user_id: Annotated[str, "User ID"],
 ) -> Any:
@@ -83,7 +83,7 @@ def users_get_v3(
     return auth.get(f"/content/v3/users/{user_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=True)
 def users_get_locations(
     limit: Annotated[int | None, "Max locations to return"] = None,
     offset: Annotated[int | None, "Pagination offset"] = None,
@@ -98,7 +98,7 @@ def users_get_locations(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=True)
 def users_get_two_factor_status(
     user_id: Annotated[str, "User ID"],
     keys: Annotated[str | None, "Comma-separated state keys to retrieve"] = None,
@@ -107,7 +107,7 @@ def users_get_two_factor_status(
     return auth.get(f"/content/v2/users/{user_id}/state", keys=keys)
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=False)
 def users_create(
     display_name: Annotated[str, "User's display name"],
     role_id: Annotated[int, "Role ID to assign"],
@@ -123,7 +123,7 @@ def users_create(
     return auth.post("/content/v3/users", body=body, sendInvite=send_invite)
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=False)
 def users_update(
     user_id: Annotated[str, "User ID"],
     attributes: Annotated[
@@ -135,7 +135,7 @@ def users_update(
     return auth.patch(f"/identity/v1/users/{user_id}", body={"attributes": attributes})
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=False)
 def users_update_v3(
     body: Annotated[
         dict[str, Any],
@@ -152,7 +152,7 @@ def users_update_v3(
     return auth.put("/content/v3/users", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=False)
 def users_bulk_update(
     users: Annotated[
         list[dict[str, Any]],
@@ -175,7 +175,7 @@ def users_bulk_update(
     return auth.put("/content/v2/users/bulk", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=False)
 def users_update_profile_pics(
     entity_ids: Annotated[list[str], "List of user IDs whose avatar should be updated"],
     base64_image: Annotated[str, "Base64-encoded image, e.g. 'data:image/jpeg;base64,<data>'"],
@@ -195,7 +195,7 @@ def users_update_profile_pics(
     return auth.post("/content/v1/avatar/bulk", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=False)
 def users_update_landing_page(
     user_id: Annotated[str, "User ID"],
     page_id: Annotated[str, "Page ID to set as the landing page"],
@@ -205,7 +205,7 @@ def users_update_landing_page(
     return auth.put(f"/content/v1/landings/target/{platform}/entity/PAGE/id/{page_id}/{user_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="users", read_only=False)
 def users_delete(
     user_id: Annotated[str, "User ID to delete"],
 ) -> Any:

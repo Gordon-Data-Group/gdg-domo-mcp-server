@@ -6,23 +6,23 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="categories", read_only=True)
 def categories_list() -> Any:
     """List all certified attribute categories."""
     return auth.get("/entity/v1/properties/category")
 
 
-@mcp.tool()
+@domo_tool(toolset="categories", read_only=True)
 def categories_list_usage() -> Any:
     """List category usage counts across entities."""
     return auth.get("/entity/v1/properties/category/usage")
 
 
-@mcp.tool()
+@domo_tool(toolset="categories", read_only=True)
 def categories_get_entity_categories(
     entity_type: Annotated[str, "Entity type (e.g. 'CARD' or 'DATASET')"],
     entity_id: Annotated[str, "Entity ID"],
@@ -31,7 +31,7 @@ def categories_get_entity_categories(
     return auth.get(f"/entity/v1/properties/entity/{entity_type}/{entity_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="categories", read_only=False)
 def categories_create(
     key: Annotated[str, "Category key"],
     description: Annotated[str, "Category description"],
@@ -44,7 +44,7 @@ def categories_create(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="categories", read_only=False)
 def categories_upsert_entity_categories(
     entity_type: Annotated[str, "Entity type (e.g. 'CARD' or 'DATASET')"],
     entity_id: Annotated[str, "Entity ID"],

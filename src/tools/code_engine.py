@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="code_engine", read_only=True)
 def code_engine_search_packages(
     body: Annotated[
         dict[str, Any],
@@ -26,7 +26,7 @@ def code_engine_search_packages(
     return auth.post("/search/v1/query", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="code_engine", read_only=True)
 def code_engine_get_package(
     package_id: Annotated[str, "Package ID (UUID)"],
     parts: Annotated[str | None, "Comma-separated parts to include"] = None,
@@ -35,7 +35,7 @@ def code_engine_get_package(
     return auth.get(f"/codeengine/v2/packages/{package_id}", parts=parts)
 
 
-@mcp.tool()
+@domo_tool(toolset="code_engine", read_only=True)
 def code_engine_get_package_version(
     package_id: Annotated[str, "Package ID (UUID)"],
     version: Annotated[str, "Version string (e.g. '1.0.0')"],
@@ -48,7 +48,7 @@ def code_engine_get_package_version(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="code_engine", read_only=True)
 def code_engine_get_package_permissions(
     package_id: Annotated[str, "Package ID (UUID)"],
 ) -> Any:
@@ -56,7 +56,7 @@ def code_engine_get_package_permissions(
     return auth.get(f"/codeengine/v2/packages/{package_id}/permissions")
 
 
-@mcp.tool()
+@domo_tool(toolset="code_engine", read_only=False)
 def code_engine_run_function(
     package_id: Annotated[str, "Package ID (UUID)"],
     version: Annotated[str, "Package version (e.g. '1.0.0')"],
@@ -76,7 +76,7 @@ def code_engine_run_function(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="code_engine", read_only=False)
 def code_engine_deploy_package(
     package_id: Annotated[str, "Package ID (UUID)"],
     version: Annotated[str, "Version to release (e.g. '1.0.0')"],
@@ -87,7 +87,7 @@ def code_engine_deploy_package(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="code_engine", read_only=False)
 def code_engine_update_package(
     body: Annotated[
         dict[str, Any],
@@ -102,7 +102,7 @@ def code_engine_update_package(
     return auth.post("/codeengine/v2/packages", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="code_engine", read_only=False)
 def code_engine_update_package_owner(
     package_id: Annotated[str, "Package ID (UUID)"],
     owner: Annotated[int, "New owner user ID"],
@@ -114,7 +114,7 @@ def code_engine_update_package_owner(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="code_engine", read_only=False)
 def code_engine_update_package_perms(
     package_id: Annotated[str, "Package ID (UUID)"],
     permissions: Annotated[

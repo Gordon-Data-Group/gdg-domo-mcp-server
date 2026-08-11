@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=True)
 def filesets_list(
     body: Annotated[
         dict[str, Any],
@@ -23,7 +23,7 @@ def filesets_list(
     return auth.post("/files/v1/filesets/search", body=body, limit=limit, offset=offset)
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=True)
 def filesets_search_files(
     fileset_id: Annotated[str, "Fileset ID"],
     body: Annotated[
@@ -46,7 +46,7 @@ def filesets_search_files(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=True)
 def filesets_query_with_ai(
     fileset_id: Annotated[str, "Fileset ID"],
     query: Annotated[str, "Natural language query"],
@@ -62,7 +62,7 @@ def filesets_query_with_ai(
     return auth.post(f"/files/v1/filesets/{fileset_id}/query", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=True)
 def filesets_get(
     fileset_id: Annotated[str, "Fileset ID"],
 ) -> Any:
@@ -70,7 +70,7 @@ def filesets_get(
     return auth.get(f"/files/v1/filesets/{fileset_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=True)
 def filesets_get_file(
     fileset_id: Annotated[str, "Fileset ID"],
     file_id: Annotated[str, "File ID"],
@@ -79,7 +79,7 @@ def filesets_get_file(
     return auth.get(f"/files/v1/filesets/{fileset_id}/files/{file_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=True)
 def filesets_get_file_by_path(
     fileset_id: Annotated[str, "Fileset ID"],
     path: Annotated[str, "File path within the fileset"],
@@ -88,7 +88,7 @@ def filesets_get_file_by_path(
     return auth.get(f"/files/v1/filesets/{fileset_id}/path", path=path)
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=True)
 def filesets_get_access(
     fileset_id: Annotated[str, "Fileset ID"],
 ) -> Any:
@@ -96,7 +96,7 @@ def filesets_get_access(
     return auth.get(f"/files/v1/filesets/{fileset_id}/access")
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=True)
 def filesets_get_stats(
     fileset_id: Annotated[str, "Fileset ID"],
 ) -> Any:
@@ -104,7 +104,7 @@ def filesets_get_stats(
     return auth.get(f"/files/v1/filesets/{fileset_id}/stats")
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=True)
 def filesets_download_file(
     fileset_id: Annotated[str, "Fileset ID"],
     file_id: Annotated[str, "File ID"],
@@ -113,7 +113,7 @@ def filesets_download_file(
     return auth.get(f"/files/v1/filesets/{fileset_id}/files/{file_id}/download")
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=True)
 def filesets_download_file_by_path(
     fileset_id: Annotated[str, "Fileset ID"],
     path: Annotated[str, "File path within the fileset"],
@@ -122,7 +122,7 @@ def filesets_download_file_by_path(
     return auth.get(f"/files/v1/filesets/{fileset_id}/path/download", path=path)
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=False)
 def filesets_create(
     name: Annotated[str, "Fileset name"],
     description: Annotated[str | None, "Fileset description"] = None,
@@ -146,7 +146,7 @@ def filesets_create(
     return auth.post("/files/v1/filesets", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=False)
 def filesets_create_folder(
     fileset_id: Annotated[str, "Fileset ID"],
     directory_path: Annotated[str, "Path for the new folder"],
@@ -158,7 +158,7 @@ def filesets_create_folder(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=False)
 def filesets_upload_file(
     fileset_id: Annotated[str, "Fileset ID"],
 ) -> Any:
@@ -166,7 +166,7 @@ def filesets_upload_file(
     return auth.post(f"/files/v1/filesets/{fileset_id}/files")
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=False)
 def filesets_update(
     fileset_id: Annotated[str, "Fileset ID"],
     name: Annotated[str | None, "New fileset name"] = None,
@@ -184,7 +184,7 @@ def filesets_update(
     return auth.post(f"/files/v1/filesets/{fileset_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=False)
 def filesets_update_access(
     fileset_id: Annotated[str, "Fileset ID"],
     file_set_access: Annotated[
@@ -199,7 +199,7 @@ def filesets_update_access(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=False)
 def filesets_update_owner(
     fileset_id: Annotated[str, "Fileset ID"],
     user_id: Annotated[int, "New owner user ID"],
@@ -211,7 +211,7 @@ def filesets_update_owner(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=False)
 def filesets_delete(
     fileset_id: Annotated[str, "Fileset ID to delete"],
 ) -> Any:
@@ -219,7 +219,7 @@ def filesets_delete(
     return auth.delete(f"/files/v1/filesets/{fileset_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=False)
 def filesets_delete_file(
     fileset_id: Annotated[str, "Fileset ID"],
     file_id: Annotated[str, "File ID to delete"],
@@ -228,7 +228,7 @@ def filesets_delete_file(
     return auth.delete(f"/files/v1/filesets/{fileset_id}/files/{file_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="filesets", read_only=False)
 def filesets_delete_file_by_path(
     fileset_id: Annotated[str, "Fileset ID"],
     path: Annotated[str, "File path to delete"],

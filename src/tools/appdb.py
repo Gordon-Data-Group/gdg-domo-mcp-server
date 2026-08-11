@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=True)
 def appdb_search_collections(
     body: Annotated[
         dict[str, Any],
@@ -24,7 +24,7 @@ def appdb_search_collections(
     return auth.post("/datastores/v1/collections/query", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=True)
 def appdb_query_documents(
     collection_id: Annotated[str, "Collection ID"],
     body: Annotated[dict[str, Any], "MongoDB-style query filter (e.g. {'$or': [...]})"],
@@ -54,19 +54,19 @@ def appdb_query_documents(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=True)
 def appdb_list_datastores() -> Any:
     """List all AppDB datastores."""
     return auth.get("/datastores/v1")
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=True)
 def appdb_list_collections() -> Any:
     """List all AppDB collections."""
     return auth.get("/datastores/v1/collections")
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=True)
 def appdb_get_datastore(
     datastore_id: Annotated[str, "Datastore ID"],
 ) -> Any:
@@ -74,7 +74,7 @@ def appdb_get_datastore(
     return auth.get(f"/datastores/v1/{datastore_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=True)
 def appdb_get_datastore_collections(
     datastore_id: Annotated[str, "Datastore ID"],
 ) -> Any:
@@ -82,7 +82,7 @@ def appdb_get_datastore_collections(
     return auth.get(f"/datastores/v1/{datastore_id}/collections")
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=True)
 def appdb_get_collection(
     collection_id: Annotated[str, "Collection ID"],
 ) -> Any:
@@ -90,7 +90,7 @@ def appdb_get_collection(
     return auth.get(f"/datastores/v1/collections/{collection_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=True)
 def appdb_get_documents(
     collection_id: Annotated[str, "Collection ID"],
 ) -> Any:
@@ -98,7 +98,7 @@ def appdb_get_documents(
     return auth.get(f"/datastores/v1/collections/{collection_id}/documents")
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=True)
 def appdb_get_collection_permissions(
     collection_id: Annotated[str, "Collection ID"],
 ) -> Any:
@@ -106,7 +106,7 @@ def appdb_get_collection_permissions(
     return auth.get(f"/datastores/v1/collections/{collection_id}/permission")
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_create_datastore(
     name: Annotated[str, "Datastore name"],
 ) -> Any:
@@ -114,7 +114,7 @@ def appdb_create_datastore(
     return auth.post("/datastores/v1", body={"name": name})
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_create_collection_in_datastore(
     datastore_id: Annotated[str, "Datastore ID"],
     body: Annotated[
@@ -129,7 +129,7 @@ def appdb_create_collection_in_datastore(
     return auth.post(f"/datastores/v1/{datastore_id}/collections/", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_create_collection(
     body: Annotated[
         dict[str, Any],
@@ -143,7 +143,7 @@ def appdb_create_collection(
     return auth.post("/datastores/v1/collections", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_create_document(
     collection_id: Annotated[str, "Collection ID"],
     content: Annotated[dict[str, Any], "Document content as key-value pairs matching the collection schema"],
@@ -155,7 +155,7 @@ def appdb_create_document(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_create_documents(
     collection_id: Annotated[str, "Collection ID"],
     documents: Annotated[list[dict[str, Any]], "List of documents, each with a 'content' key"],
@@ -167,7 +167,7 @@ def appdb_create_documents(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_update_collection(
     collection_id: Annotated[str, "Collection ID"],
     body: Annotated[
@@ -179,7 +179,7 @@ def appdb_update_collection(
     return auth.put(f"/datastores/v1/collections/{collection_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_update_collection_permissions(
     collection_id: Annotated[str, "Collection ID"],
     entity_type: Annotated[str, "Entity type (e.g. 'USER' or 'GROUP')"],
@@ -195,7 +195,7 @@ def appdb_update_collection_permissions(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_update_document(
     collection_id: Annotated[str, "Collection ID"],
     document_id: Annotated[str, "Document ID"],
@@ -208,7 +208,7 @@ def appdb_update_document(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_upsert_documents(
     collection_id: Annotated[str, "Collection ID"],
     documents: Annotated[
@@ -223,7 +223,7 @@ def appdb_upsert_documents(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_delete_datastore(
     datastore_id: Annotated[str, "Datastore ID to delete"],
 ) -> Any:
@@ -231,7 +231,7 @@ def appdb_delete_datastore(
     return auth.delete(f"/datastores/v1/{datastore_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_delete_collection(
     collection_id: Annotated[str, "Collection ID to delete"],
 ) -> Any:
@@ -239,7 +239,7 @@ def appdb_delete_collection(
     return auth.delete(f"/datastores/v1/collections/{collection_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_remove_collection_access(
     collection_id: Annotated[str, "Collection ID"],
     entity_type: Annotated[str, "Entity type (e.g. 'USER' or 'GROUP')"],
@@ -251,7 +251,7 @@ def appdb_remove_collection_access(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_delete_document(
     collection_id: Annotated[str, "Collection ID"],
     document_id: Annotated[str, "Document ID to delete"],
@@ -262,7 +262,7 @@ def appdb_delete_document(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="appdb", read_only=False)
 def appdb_delete_documents(
     collection_id: Annotated[str, "Collection ID"],
     ids: Annotated[str, "Comma-separated document IDs to delete"],

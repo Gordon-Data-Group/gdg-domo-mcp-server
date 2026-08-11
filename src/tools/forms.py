@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="forms", read_only=True)
 def forms_search(
     body: Annotated[
         dict[str, Any],
@@ -26,7 +26,7 @@ def forms_search(
     return auth.post("/search/v1/query", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="forms", read_only=True)
 def forms_get(
     form_id: Annotated[str, "Form ID"],
 ) -> Any:
@@ -34,7 +34,7 @@ def forms_get(
     return auth.get(f"/forms/v1/{form_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="forms", read_only=False)
 def forms_create_instance(
     body: Annotated[
         dict[str, Any],
@@ -49,7 +49,7 @@ def forms_create_instance(
     return auth.post("/forms/v1/instances", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="forms", read_only=False)
 def forms_create_submission(
     instance_id: Annotated[str, "Form instance ID"],
     fields: Annotated[
@@ -61,7 +61,7 @@ def forms_create_submission(
     return auth.post(f"/forms/v1/instances/{instance_id}/submission", body=fields)
 
 
-@mcp.tool()
+@domo_tool(toolset="forms", read_only=False)
 def forms_update_instance(
     instance_id: Annotated[str, "Form instance ID"],
     body: Annotated[
@@ -73,7 +73,7 @@ def forms_update_instance(
     return auth.put(f"/forms/v1/instances/{instance_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="forms", read_only=False)
 def forms_update_fields(
     form_id: Annotated[str, "Form ID"],
     body: Annotated[

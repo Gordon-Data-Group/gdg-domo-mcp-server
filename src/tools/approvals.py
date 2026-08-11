@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 _GQL = "/synapse/approval/graphql"
@@ -83,7 +83,7 @@ _SAVE_TEMPLATE_MUTATION = (
 )
 
 
-@mcp.tool()
+@domo_tool(toolset="approvals", read_only=True)
 def approvals_search_templates(
     first: Annotated[int | None, "Max templates to return"] = None,
     after: Annotated[str | None, "Cursor for pagination"] = None,
@@ -113,7 +113,7 @@ def approvals_search_templates(
     })
 
 
-@mcp.tool()
+@domo_tool(toolset="approvals", read_only=True)
 def approvals_search(
     query: Annotated[
         dict[str, Any] | None,
@@ -134,7 +134,7 @@ def approvals_search(
     })
 
 
-@mcp.tool()
+@domo_tool(toolset="approvals", read_only=True)
 def approvals_list_templates() -> Any:
     """List all approval templates."""
     return auth.post(_GQL, body={
@@ -143,7 +143,7 @@ def approvals_list_templates() -> Any:
     })
 
 
-@mcp.tool()
+@domo_tool(toolset="approvals", read_only=True)
 def approvals_get_template(
     template_id: Annotated[str, "Template ID (UUID)"],
 ) -> Any:
@@ -155,7 +155,7 @@ def approvals_get_template(
     }])
 
 
-@mcp.tool()
+@domo_tool(toolset="approvals", read_only=True)
 def approvals_get(
     approval_id: Annotated[str, "Approval request ID (UUID)"],
 ) -> Any:
@@ -167,7 +167,7 @@ def approvals_get(
     })
 
 
-@mcp.tool()
+@domo_tool(toolset="approvals", read_only=False)
 def approvals_replace_approver(
     body: Annotated[
         dict[str, Any],
@@ -178,7 +178,7 @@ def approvals_replace_approver(
     return auth.post(_GQL, body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="approvals", read_only=False)
 def approvals_update_template(
     template: Annotated[
         dict[str, Any],

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
@@ -14,13 +14,13 @@ from src import auth
 # Access Tokens
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_list_access_tokens() -> Any:
     """List all access tokens in the instance."""
     return auth.get("/data/v1/accesstokens")
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=False)
 def admin_delete_access_token(
     token_id: Annotated[str, "Access token ID to revoke"],
 ) -> Any:
@@ -32,13 +32,13 @@ def admin_delete_access_token(
 # Activity Log
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_list_activity_log_types() -> Any:
     """List all auditable object types for the activity log."""
     return auth.get("/audit/v1/user-audits/objectTypes")
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_get_activity_log(
     start: Annotated[str | None, "Start datetime for the log range (ISO 8601 or epoch ms)"] = None,
     end: Annotated[str | None, "End datetime for the log range (ISO 8601 or epoch ms)"] = None,
@@ -61,19 +61,19 @@ def admin_get_activity_log(
 # Company
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_get_customer_stats() -> Any:
     """Get aggregate usage statistics for the Domo instance."""
     return auth.get("/query/v1/datasources/customer-stats")
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_list_timezones() -> Any:
     """List all timezone options available for dataflows and scheduling."""
     return auth.get("/dataprocessing/v1/dataflows/timezones")
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_get_locale(
     ignore_cache: Annotated[bool | None, "Bypass cache and fetch fresh locale data"] = None,
 ) -> Any:
@@ -81,7 +81,7 @@ def admin_get_locale(
     return auth.get("/content/v1/customer-states/locale", ignoreCache=ignore_cache)
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_get_customer_state(
     customer_state: Annotated[str, "Customer state key to retrieve (e.g. 'domo.policy.multifactor.maxCodeAttempts')"],
     ignore_cache: Annotated[bool | None, "Bypass cache and fetch fresh state data"] = None,
@@ -93,31 +93,31 @@ def admin_get_customer_state(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_get_licenses() -> Any:
     """Get current license counts and limits for the Domo instance."""
     return auth.get("/content/v1/licenses/total/current")
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_get_jupyter_settings() -> Any:
     """Get Jupyter notebook settings for the instance."""
     return auth.get("/datascience/v1/settings")
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_get_credits_summary() -> Any:
     """Get the current credit usage summary for the instance's contract period."""
     return auth.get("/metrics/v1/usage/credits/contract/current/summary")
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_get_default_landing_page() -> Any:
     """Get the default landing page configured for the instance."""
     return auth.get("/content/v1/landings/customer")
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=False)
 def admin_update_customer_state(
     customer_state: Annotated[str, "Customer state key to update"],
     name: Annotated[str, "State name"],
@@ -130,7 +130,7 @@ def admin_update_customer_state(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=False)
 def admin_update_property(
     property: Annotated[str, "Property key to update"],
     body: Annotated[
@@ -149,7 +149,7 @@ def admin_update_property(
 # OAuth API Clients
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=True)
 def admin_list_oauth_clients() -> Any:
     """List all OAuth API client (developer token) configurations."""
     return auth.get("/identity/v1/developer-tokens")
@@ -159,7 +159,7 @@ def admin_list_oauth_clients() -> Any:
 # Session Management
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
+@domo_tool(toolset="admin", read_only=False)
 def admin_delete_session(
     session_id: Annotated[str, "Session ID to terminate"],
 ) -> Any:

@@ -6,17 +6,17 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="toolkit", read_only=True)
 def toolkit_list_applications() -> Any:
     """List all Toolkit applications."""
     return auth.get("/executor/v1/applications")
 
 
-@mcp.tool()
+@domo_tool(toolset="toolkit", read_only=True)
 def toolkit_get_jobs(
     application_id: Annotated[str, "Application ID"],
     limit: Annotated[int | None, "Max jobs to return"] = None,
@@ -30,7 +30,7 @@ def toolkit_get_jobs(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="toolkit", read_only=True)
 def toolkit_get_job(
     application_id: Annotated[str, "Application ID"],
     job_id: Annotated[str, "Job ID"],
@@ -39,7 +39,7 @@ def toolkit_get_job(
     return auth.get(f"/executor/v1/applications/{application_id}/jobs/{job_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="toolkit", read_only=False)
 def toolkit_run_job(
     application_id: Annotated[str, "Application ID"],
     job_id: Annotated[str, "Job ID"],
@@ -51,7 +51,7 @@ def toolkit_run_job(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="toolkit", read_only=False)
 def toolkit_share_job(
     application_id: Annotated[str, "Application ID"],
     job_id: Annotated[str, "Job ID"],
@@ -74,7 +74,7 @@ def toolkit_share_job(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="toolkit", read_only=False)
 def toolkit_create_trigger(
     app_id: Annotated[str, "Application ID"],
     job_id: Annotated[str, "Job ID"],
@@ -88,7 +88,7 @@ def toolkit_create_trigger(
     return auth.post(f"/executor/v1/applications/{app_id}/jobs/{job_id}/triggers", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="toolkit", read_only=False)
 def toolkit_update_job(
     app_id: Annotated[str, "Application ID"],
     job_id: Annotated[str, "Job ID"],
@@ -101,7 +101,7 @@ def toolkit_update_job(
     return auth.put(f"/executor/v1/applications/{app_id}/jobs/{job_id}", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="toolkit", read_only=False)
 def toolkit_delete_job(
     app_id: Annotated[str, "Application ID"],
     job_id: Annotated[str, "Job ID to delete"],

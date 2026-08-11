@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=True)
 def app_studio_list(
     parts: Annotated[str | None, "Comma-separated parts to include in the response"] = None,
     include_hidden_views: Annotated[bool | None, "Include hidden views"] = None,
@@ -25,7 +25,7 @@ def app_studio_list(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=True)
 def app_studio_list_admin_summary(
     body: Annotated[
         dict[str, Any],
@@ -46,7 +46,7 @@ def app_studio_list_admin_summary(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=True)
 def app_studio_get(
     app_id: Annotated[str, "App ID"],
 ) -> Any:
@@ -54,7 +54,7 @@ def app_studio_get(
     return auth.get(f"/content/v1/dataapps/{app_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=True)
 def app_studio_get_admin_summary(
     app_id: Annotated[str, "App ID"],
 ) -> Any:
@@ -62,7 +62,7 @@ def app_studio_get_admin_summary(
     return auth.get(f"/content/v1/dataapps/{app_id}/adminsummary")
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=True)
 def app_studio_get_access(
     app_id: Annotated[str, "App ID"],
 ) -> Any:
@@ -70,7 +70,7 @@ def app_studio_get_access(
     return auth.get(f"/content/v1/dataapps/{app_id}/access")
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=False)
 def app_studio_share(
     data_app_ids: Annotated[list[str], "List of app IDs to share"],
     recipients: Annotated[list[dict[str, Any]], "List of recipients, each with 'id' (int) and 'type' (e.g. 'user')"],
@@ -84,7 +84,7 @@ def app_studio_share(
     return auth.post("/content/v1/dataapps/share", body=body, sendEmail=send_email)
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=False)
 def app_studio_create_view(
     app_id: Annotated[str, "App ID"],
     title: Annotated[str, "View title"],
@@ -100,7 +100,7 @@ def app_studio_create_view(
     return auth.post(f"/content/v1/dataapps/{app_id}/views", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=False)
 def app_studio_bulk_add_owners(
     entity_ids: Annotated[list[str], "App IDs to add owners to"],
     owners: Annotated[list[dict[str, Any]], "Owners to add, each with 'type' and 'id'"],
@@ -116,7 +116,7 @@ def app_studio_bulk_add_owners(
     return auth.put("/content/v1/dataapps/bulk/owners", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=False)
 def app_studio_duplicate(
     app_id: Annotated[str, "App ID to duplicate"],
     body: Annotated[
@@ -128,7 +128,7 @@ def app_studio_duplicate(
     return auth.put(f"/content/v1/dataapps/{app_id}/duplicate", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=False)
 def app_studio_duplicate_sync(
     app_id: Annotated[str, "App ID to duplicate"],
     body: Annotated[
@@ -140,7 +140,7 @@ def app_studio_duplicate_sync(
     return auth.put(f"/content/v1/dataapps/{app_id}/duplicate/synchronous", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=False)
 def app_studio_delete(
     app_id: Annotated[str, "App ID to delete"],
 ) -> Any:
@@ -148,7 +148,7 @@ def app_studio_delete(
     return auth.delete(f"/content/v1/dataapps/{app_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=False)
 def app_studio_delete_view(
     app_id: Annotated[str, "App ID"],
     view_id: Annotated[str, "View ID to delete"],
@@ -157,7 +157,7 @@ def app_studio_delete_view(
     return auth.delete(f"/content/v1/dataapps/{app_id}/views/{view_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="app_studio", read_only=False)
 def app_studio_bulk_remove_owners(
     entity_ids: Annotated[list[str], "App IDs to remove owners from"],
     owners: Annotated[

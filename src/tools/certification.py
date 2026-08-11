@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 _GQL = "/synapse/approval/graphql"
@@ -92,7 +92,7 @@ _REMOVE_MUTATION = (
 )
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=True)
 def certification_list(
     type: Annotated[str | None, "Certification type (e.g. 'CC')"] = None,
     view: Annotated[str | None, "View filter: 'WAITING' or 'SUBMITTED'"] = None,
@@ -122,7 +122,7 @@ def certification_list(
     }])
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=True)
 def certification_list_templates(
     type: Annotated[str | None, "Certification type (e.g. 'CC:CARD' or 'CC:DSET')"] = None,
     include_unpublished: Annotated[bool | None, "Include unpublished templates"] = None,
@@ -135,7 +135,7 @@ def certification_list_templates(
     }])
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=True)
 def certification_list_certified_entities(
     type: Annotated[str, "Entity type: 'CC:CARD' or 'CC:DSET'"],
     first: Annotated[int | None, "Max results"] = None,
@@ -157,7 +157,7 @@ def certification_list_certified_entities(
     })
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=True)
 def certification_get(
     certification_id: Annotated[str, "Certification ID (UUID)"],
 ) -> Any:
@@ -169,7 +169,7 @@ def certification_get(
     }])
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=True)
 def certification_get_template(
     type: Annotated[str, "Certification type: 'CARD' or 'DATASET'"],
     template_id: Annotated[str | None, "Template ID (UUID)"] = None,
@@ -184,7 +184,7 @@ def certification_get_template(
     }])
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=True)
 def certification_get_id_from_approval(
     approval_id: Annotated[str, "Approval ID (UUID)"],
 ) -> Any:
@@ -196,7 +196,7 @@ def certification_get_id_from_approval(
     }])
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=True)
 def certification_get_entity_access(
     entity_type: Annotated[str, "Entity type: 'CARD' or 'DATASET'"],
     entity_id: Annotated[int, "Card or dataset ID"],
@@ -210,7 +210,7 @@ def certification_get_entity_access(
     }])
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=True)
 def certification_get_waiting_on_me_count(
     type: Annotated[str | None, "Certification type (default 'CC')"] = None,
 ) -> Any:
@@ -222,7 +222,7 @@ def certification_get_waiting_on_me_count(
     }])
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=True)
 def certification_get_expire_on_edit(
     type: Annotated[str, "Property type key (e.g. 'certification.expireOnEdit')"],
 ) -> Any:
@@ -230,7 +230,7 @@ def certification_get_expire_on_edit(
     return auth.get(f"/customer/v1/properties/{type}")
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=False)
 def certification_create(
     request: Annotated[
         dict[str, Any],
@@ -246,7 +246,7 @@ def certification_create(
     }])
 
 
-@mcp.tool()
+@domo_tool(toolset="certification", read_only=False)
 def certification_remove(
     type: Annotated[str, "Entity type: 'CARD' or 'DATASET'"],
     entity_id: Annotated[str, "Card or dataset ID"],

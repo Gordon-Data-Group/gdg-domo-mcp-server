@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="files", read_only=True)
 def files_get_revision(
     file_id: Annotated[str, "File ID"],
     revision_id: Annotated[str, "Revision ID"],
@@ -23,7 +23,7 @@ def files_get_revision(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="files", read_only=True)
 def files_get_revision_details(
     file_id: Annotated[str, "File ID"],
     revision_id: Annotated[str, "Revision ID"],
@@ -32,7 +32,7 @@ def files_get_revision_details(
     return auth.get(f"/data/v1/data-files/{file_id}/revisions/{revision_id}/details")
 
 
-@mcp.tool()
+@domo_tool(toolset="files", read_only=True)
 def files_get_details(
     file_id: Annotated[str, "File ID"],
     expand: Annotated[str | None, "Comma-separated fields to expand"] = None,
@@ -41,7 +41,7 @@ def files_get_details(
     return auth.get(f"/data/v1/data-files/{file_id}/details", expand=expand)
 
 
-@mcp.tool()
+@domo_tool(toolset="files", read_only=False)
 def files_create(
     name: Annotated[str | None, "File name"] = None,
     public: Annotated[bool | None, "Make the file publicly accessible"] = None,
@@ -50,7 +50,7 @@ def files_create(
     return auth.post("/data/v1/data-files", name=name, public=public)
 
 
-@mcp.tool()
+@domo_tool(toolset="files", read_only=False)
 def files_create_card(
     body: Annotated[
         dict[str, Any],
@@ -65,7 +65,7 @@ def files_create_card(
     return auth.post("/content/v1/cards", body=body, pageId=page_id)
 
 
-@mcp.tool()
+@domo_tool(toolset="files", read_only=False)
 def files_update(
     file_id: Annotated[str, "File ID"],
     public: Annotated[bool | None, "Make the file publicly accessible"] = None,
@@ -75,7 +75,7 @@ def files_update(
     return auth.put(f"/data/v1/data-files/{file_id}", public=public, description=description)
 
 
-@mcp.tool()
+@domo_tool(toolset="files", read_only=False)
 def files_update_card(
     card_id: Annotated[str, "Card ID"],
     body: Annotated[

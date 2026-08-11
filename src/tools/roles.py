@@ -6,23 +6,23 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="roles", read_only=True)
 def roles_list() -> Any:
     """List all roles defined in the Domo instance."""
     return auth.get("/authorization/v1/roles")
 
 
-@mcp.tool()
+@domo_tool(toolset="roles", read_only=True)
 def roles_list_authorities() -> Any:
     """List all available authority (grant) types."""
     return auth.get("/authorization/v1/authorities")
 
 
-@mcp.tool()
+@domo_tool(toolset="roles", read_only=True)
 def roles_get_authority_users(
     authorities: Annotated[str | None, "Comma-separated authority keys to filter by"] = None,
     limit: Annotated[int | None, "Max results to return"] = None,
@@ -41,7 +41,7 @@ def roles_get_authority_users(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="roles", read_only=True)
 def roles_get(
     role_id: Annotated[str, "Role ID"],
 ) -> Any:
@@ -49,7 +49,7 @@ def roles_get(
     return auth.get(f"/authorization/v1/roles/{role_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="roles", read_only=True)
 def roles_get_authorities(
     role_id: Annotated[str, "Role ID"],
 ) -> Any:

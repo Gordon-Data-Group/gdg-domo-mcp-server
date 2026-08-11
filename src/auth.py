@@ -77,6 +77,27 @@ def base_url() -> str:
     return f"{_instance_url()}/api"
 
 
+def read_only_mode() -> bool:
+    """True unless DOMO_READ_ONLY is explicitly set to a falsy value.
+
+    Defaults to read-only so a freshly configured server can never mutate
+    Domo data until an operator deliberately opts in via the environment.
+    This is the single source of truth for read-only status — both tool
+    registration (src/toolsets.py) and this module's write verbs consult it,
+    so a tool mis-tagged as read-only still can't reach a mutating endpoint.
+    """
+    return os.environ.get("DOMO_READ_ONLY", "1").strip().lower() not in ("0", "false", "no", "off")
+
+
+def _assert_write_allowed(path: str) -> None:
+    if read_only_mode():
+        raise DomoConfigError(
+            f"Blocked write request to '{path}': DOMO_READ_ONLY is enabled (default). "
+            "Set DOMO_READ_ONLY=0 in your environment to allow tools that create, "
+            "update, or delete Domo data."
+        )
+
+
 def get_headers() -> dict[str, str]:
     return {
         "X-DOMO-DEVELOPER-TOKEN": _token(),
@@ -135,21 +156,25 @@ def get_root(path: str, **params: Any) -> Any:
 
 
 def post(path: str, body: Any = None, **params: Any) -> Any:
+    _assert_write_allowed(path)
     with _client() as c:
         return _parse(c.post(path, json=body, params=_clean_params(params)))
 
 
 def put(path: str, body: Any = None, **params: Any) -> Any:
+    _assert_write_allowed(path)
     with _client() as c:
         return _parse(c.put(path, json=body, params=_clean_params(params)))
 
 
 def patch(path: str, body: Any = None, **params: Any) -> Any:
+    _assert_write_allowed(path)
     with _client() as c:
         return _parse(c.patch(path, json=body, params=_clean_params(params)))
 
 
 def delete(path: str, body: Any = None, **params: Any) -> Any:
+    _assert_write_allowed(path)
     with _client() as c:
         # httpx.Client has no .delete(..., json=...) shorthand
         return _parse(c.request("DELETE", path, json=body, params=_clean_params(params)))
@@ -157,12 +182,14 @@ def delete(path: str, body: Any = None, **params: Any) -> Any:
 
 def delete_root(path: str, **params: Any) -> Any:
     """DELETE against a path rooted at the instance URL (no /api prefix)."""
+    _assert_write_allowed(path)
     with httpx.Client(base_url=_instance_url(), headers=get_headers(), timeout=30.0) as c:
         return _parse(c.request("DELETE", path, params=_clean_params(params)))
 
 
 def post_no_body(path: str, **params: Any) -> Any:
     """POST with only query params and no request body (no Content-Type header)."""
+    _assert_write_allowed(path)
     headers = {k: v for k, v in get_headers().items() if k != "Content-Type"}
     with httpx.Client(base_url=base_url(), headers=headers, timeout=30.0) as c:
         return _parse(c.post(path, params=_clean_params(params)))
@@ -173,6 +200,7 @@ def put_text(path: str, text: str, content_type: str = "text/csv", **params: Any
 
     Uses a 120-second timeout — appropriate for large data payloads.
     """
+    _assert_write_allowed(path)
     headers = get_headers()
     headers["Content-Type"] = content_type
     with httpx.Client(base_url=base_url(), headers=headers, timeout=120.0) as c:
@@ -208,6 +236,7 @@ def post_multipart(
     files= parameter — do NOT set it manually or the boundary will be missing.
     Uses a 120-second timeout for large files.
     """
+    _assert_write_allowed(path)
     headers = {
         "X-DOMO-DEVELOPER-TOKEN": _token(),
         "Accept": "application/json",

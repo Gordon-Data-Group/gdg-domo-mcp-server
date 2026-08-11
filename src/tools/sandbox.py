@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from src.app import mcp
+from src.toolsets import domo_tool
 from src import auth
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=True)
 def sandbox_list_repositories(
     body: Annotated[
         dict[str, Any] | None,
@@ -24,7 +24,7 @@ def sandbox_list_repositories(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=True)
 def sandbox_list_promotion_history(
     body: Annotated[
         dict[str, Any] | None,
@@ -38,7 +38,7 @@ def sandbox_list_promotion_history(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=True)
 def sandbox_list_commit_history(
     body: Annotated[
         dict[str, Any] | None,
@@ -52,7 +52,7 @@ def sandbox_list_commit_history(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=True)
 def sandbox_list_instances(
     limit: Annotated[int | None, "Max instances to return"] = None,
 ) -> Any:
@@ -60,7 +60,7 @@ def sandbox_list_instances(
     return auth.get("/version/v1/authorizations", limit=limit)
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=True)
 def sandbox_get_repository(
     repository_id: Annotated[str, "Repository ID"],
 ) -> Any:
@@ -68,7 +68,7 @@ def sandbox_get_repository(
     return auth.get(f"/version/v1/repositories/{repository_id}")
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=True)
 def sandbox_get_repository_commits(
     repository_id: Annotated[str, "Repository ID"],
 ) -> Any:
@@ -76,7 +76,7 @@ def sandbox_get_repository_commits(
     return auth.get(f"/version/v1/repositories/{repository_id}/commits")
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=True)
 def sandbox_get_repository_commit_reqs(
     repository_id: Annotated[str, "Repository ID"],
 ) -> Any:
@@ -84,7 +84,7 @@ def sandbox_get_repository_commit_reqs(
     return auth.get(f"/version/v1/repositories/{repository_id}/commitRequests")
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=True)
 def sandbox_get_repository_permissions(
     repository_id: Annotated[str, "Repository ID"],
 ) -> Any:
@@ -92,7 +92,7 @@ def sandbox_get_repository_permissions(
     return auth.get(f"/version/v1/repositories/{repository_id}/permissions")
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=True)
 def sandbox_get_instance_access(
     repository_id: Annotated[str, "Repository ID"],
 ) -> Any:
@@ -100,13 +100,13 @@ def sandbox_get_instance_access(
     return auth.get(f"/version/v1/repositories/{repository_id}/access")
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=True)
 def sandbox_get_settings() -> Any:
     """Get sandbox settings for the instance."""
     return auth.get("/version/v1/settings")
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=False)
 def sandbox_promote_and_link(
     repository_id: Annotated[str, "Repository ID"],
     deployment_id: Annotated[str, "Deployment ID"],
@@ -122,7 +122,7 @@ def sandbox_promote_and_link(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=False)
 def sandbox_create_commit(
     repository_id: Annotated[str, "Repository ID"],
     summary: Annotated[str, "Commit summary message"],
@@ -138,7 +138,7 @@ def sandbox_create_commit(
     return auth.post(f"/version/v1/repositories/{repository_id}/commitRequests", body=body)
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=False)
 def sandbox_update_repository_perms(
     repository_id: Annotated[str, "Repository ID"],
     permission_updates: Annotated[
@@ -153,7 +153,7 @@ def sandbox_update_repository_perms(
     )
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=False)
 def sandbox_update_instance_access(
     repository_id: Annotated[str, "Repository ID"],
     domains: Annotated[list[str], "List of allowed domains (e.g. ['sub1.domain.tld'])"],
@@ -162,7 +162,7 @@ def sandbox_update_instance_access(
     return auth.post(f"/version/v1/repositories{repository_id}/access", body=domains)
 
 
-@mcp.tool()
+@domo_tool(toolset="sandbox", read_only=False)
 def sandbox_update_instance_alias(
     aliased_domain: Annotated[str, "Full domain to alias (e.g. 'test.domo.com')"],
     alias: Annotated[str, "Alias name (e.g. 'test')"],
