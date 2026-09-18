@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "domo-instance-alias": {
+      "command": "domo-mcp-server",
+      "env": {
+        "DOMO_INSTANCE_URL": "https://[INSTANCE].domo.com",
+        "DOMO_DEVELOPER_TOKEN": "[DOMO-DEVELOPER-TOKEN]"
+      }
+    }
+  }
+}
