@@ -4,6 +4,8 @@
 
 MCP server exposing Domo internal APIs as tools. 529 tools across 35 API groups — 281 read-only, 248 that create/update/delete data.
 
+Built and maintained by [Gordon Data Group](https://gordondatagroup.com), a data and analytics consulting firm. Need help with a Domo implementation, custom tooling, or AI integration? [Get in touch](https://gordondatagroup.com).
+
 By default the server is **read-only** and loads **every** toolset up front. Two independent knobs trade safety and token footprint against capability:
 
 - `DOMO_READ_ONLY` (default `1`) — write tools are not registered, and blocked at the HTTP layer even if called directly. Set to `0` to unlock them.
@@ -144,3 +146,9 @@ Toolset name = module name, and is what you pass to `enable_toolset` under `DOMO
 | 34 | toolkit | 8 | 3 | 5 |
 | 35 | users | 16 | 9 | 7 |
 | | **Total** | **529** | **281** | **248** |
+
+---
+
+## About Gordon Data Group
+
+This project is maintained by [Gordon Data Group](https://gordondatagroup.com), a consulting firm specializing in Domo implementations, data engineering, and AI-driven tooling. If your team needs help getting more out of Domo — custom integrations, dataflow architecture, governance, or projects like this one — [reach out](https://gordondatagroup.com).
