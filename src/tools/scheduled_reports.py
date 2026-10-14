@@ -91,7 +91,7 @@ def scheduled_reports_search_history(
     skip: Annotated[int | None, "Pagination offset"] = None,
 ) -> Any:
     """Search scheduled report history."""
-    return auth.post(
+    return auth.post_read(
         "/content/v1/reportschedules/history/search",
         body=body,
         limit=limit,

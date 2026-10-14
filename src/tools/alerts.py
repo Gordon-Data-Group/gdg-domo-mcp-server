@@ -49,7 +49,7 @@ def alerts_search(
     ],
 ) -> Any:
     """Search alerts using the global search API."""
-    return auth.post("/search/v1/query", body=body)
+    return auth.post_read("/search/v1/query", body=body)
 
 
 @domo_tool(toolset="alerts", read_only=True)
@@ -62,7 +62,7 @@ def alerts_get_bulk(
     offset: Annotated[int | None, "Pagination offset"] = None,
 ) -> Any:
     """Fetch multiple alerts by ID in a single request."""
-    return auth.post(
+    return auth.post_read(
         "/social/v4/alerts/ids",
         body=alert_ids,
         all=all,

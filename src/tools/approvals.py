@@ -106,7 +106,7 @@ def approvals_search_templates(
         variables["orderBy"] = order_by
     if reverse_sort is not None:
         variables["reverseSort"] = reverse_sort
-    return auth.post(_GQL, body={
+    return auth.post_read(_GQL, body={
         "operationName": "getApprovalTemplatesConnection",
         "query": _SEARCH_TEMPLATES_QUERY,
         "variables": variables,
@@ -123,7 +123,7 @@ def approvals_search(
     reverse_sort: Annotated[bool | None, "Reverse sort order"] = None,
 ) -> Any:
     """Search approval requests with filters."""
-    return auth.post(_GQL, body={
+    return auth.post_read(_GQL, body={
         "operationName": "getFilteredRequests",
         "query": _SEARCH_APPROVALS_QUERY,
         "variables": {
@@ -137,7 +137,7 @@ def approvals_search(
 @domo_tool(toolset="approvals", read_only=True)
 def approvals_list_templates() -> Any:
     """List all approval templates."""
-    return auth.post(_GQL, body={
+    return auth.post_read(_GQL, body={
         "operationName": "listTemplates",
         "query": _LIST_TEMPLATES_QUERY,
     })
@@ -148,7 +148,7 @@ def approvals_get_template(
     template_id: Annotated[str, "Template ID (UUID)"],
 ) -> Any:
     """Get an approval template by ID."""
-    return auth.post(_GQL, body=[{
+    return auth.post_read(_GQL, body=[{
         "operationName": "getTemplateForEdit",
         "query": _GET_TEMPLATE_QUERY,
         "variables": {"id": template_id},
@@ -160,7 +160,7 @@ def approvals_get(
     approval_id: Annotated[str, "Approval request ID (UUID)"],
 ) -> Any:
     """Get an approval request by ID."""
-    return auth.post(_GQL, body={
+    return auth.post_read(_GQL, body={
         "operationName": "getApprovalForDetails",
         "query": _GET_APPROVAL_QUERY,
         "variables": {"id": approval_id},

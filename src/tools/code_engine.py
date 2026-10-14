@@ -23,7 +23,7 @@ def code_engine_search_packages(
     ],
 ) -> Any:
     """Search Code Engine packages using the global search API."""
-    return auth.post("/search/v1/query", body=body)
+    return auth.post_read("/search/v1/query", body=body)
 
 
 @domo_tool(toolset="code_engine", read_only=True)

@@ -26,7 +26,7 @@ def cards_search(
     ],
 ) -> Any:
     """Search cards using the global search API."""
-    return auth.post("/search/v1/query", body=body)
+    return auth.post_read("/search/v1/query", body=body)
 
 
 @domo_tool(toolset="cards", read_only=True)
@@ -48,7 +48,7 @@ def cards_list_admin_summary(
     skip: Annotated[int | None, "Pagination offset"] = None,
 ) -> Any:
     """List cards with admin-level metadata using flexible filters."""
-    return auth.post("/content/v2/cards/adminsummary", body=body, limit=limit, skip=skip)
+    return auth.post_read("/content/v2/cards/adminsummary", body=body, limit=limit, skip=skip)
 
 
 @domo_tool(toolset="cards", read_only=True)
@@ -82,7 +82,7 @@ def cards_get_view_counts(
     urns: Annotated[list[int], "List of card URNs (numeric) to get view counts for"],
 ) -> Any:
     """Get view counts for one or more cards."""
-    return auth.put("/content/v1/analytics/views/cards/counts", body={"urns": urns})
+    return auth.put_read("/content/v1/analytics/views/cards/counts", body={"urns": urns})
 
 
 @domo_tool(toolset="cards", read_only=True)
@@ -183,7 +183,7 @@ def cards_get_definition_for_update(
         body["dynamicText"] = dynamic_text
     if variables is not None:
         body["variables"] = variables
-    return auth.put("/content/v3/cards/kpi/definition", body=body)
+    return auth.put_read("/content/v3/cards/kpi/definition", body=body)
 
 
 @domo_tool(toolset="cards", read_only=True)
@@ -201,7 +201,7 @@ def cards_render(
     parts: Annotated[str | None, "Comma-separated parts: e.g. 'summary,graph,annotations'"] = None,
 ) -> Any:
     """Render a card and return its data/image payload."""
-    return auth.put(f"/content/v1/cards/kpi/{card_id}/render", body=body, parts=parts)
+    return auth.put_read(f"/content/v1/cards/kpi/{card_id}/render", body=body, parts=parts)
 
 
 @domo_tool(toolset="cards", read_only=False)

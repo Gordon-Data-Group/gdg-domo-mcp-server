@@ -105,7 +105,7 @@ def certification_list(
     template_id: Annotated[str | None, "Filter by template ID"] = None,
 ) -> Any:
     """List certification requests."""
-    return auth.post(_GQL, body=[{
+    return auth.post_read(_GQL, body=[{
         "operationName": "getWorkflowConnection",
         "query": _LIST_QUERY,
         "variables": {
@@ -128,7 +128,7 @@ def certification_list_templates(
     include_unpublished: Annotated[bool | None, "Include unpublished templates"] = None,
 ) -> Any:
     """List certification templates."""
-    return auth.post(_GQL, body=[{
+    return auth.post_read(_GQL, body=[{
         "operationName": "getCertifiedTemplates",
         "query": _LIST_TEMPLATES_QUERY,
         "variables": {"type": type, "includeUnpublished": include_unpublished or False},
@@ -144,7 +144,7 @@ def certification_list_certified_entities(
     state_filter: Annotated[str | None, "State filter: PENDING, EXPIRED, CERTIFIED, or REQUESTED"] = None,
 ) -> Any:
     """List certified entities (cards or datasets)."""
-    return auth.post(_GQL, body={
+    return auth.post_read(_GQL, body={
         "operationName": "getCertifiedEntities",
         "query": _LIST_CERTIFIED_ENTITIES_QUERY,
         "variables": {
@@ -162,7 +162,7 @@ def certification_get(
     certification_id: Annotated[str, "Certification ID (UUID)"],
 ) -> Any:
     """Get a certification request by ID."""
-    return auth.post(_GQL, body=[{
+    return auth.post_read(_GQL, body=[{
         "operationName": "getCertificationDetails",
         "query": _GET_CERT_QUERY,
         "variables": {"id": certification_id},
@@ -177,7 +177,7 @@ def certification_get_template(
     title: Annotated[str | None, "Entity title"] = None,
 ) -> Any:
     """Get a certification template."""
-    return auth.post(_GQL, body=[{
+    return auth.post_read(_GQL, body=[{
         "operationName": "getCertifiedTemplate",
         "query": _GET_TEMPLATE_QUERY,
         "variables": {"type": type, "templateId": template_id, "id": entity_id, "title": title},
@@ -189,7 +189,7 @@ def certification_get_id_from_approval(
     approval_id: Annotated[str, "Approval ID (UUID)"],
 ) -> Any:
     """Get the certification ID corresponding to an approval ID."""
-    return auth.post(_GQL, body=[{
+    return auth.post_read(_GQL, body=[{
         "operationName": "getCertificationIdFromApprovalId",
         "query": _GET_ID_FROM_APPROVAL_QUERY,
         "variables": {"id": approval_id},
@@ -203,7 +203,7 @@ def certification_get_entity_access(
     approvers: Annotated[list[dict[str, Any]], "List of approver objects with type, id, approverId, etc."],
 ) -> Any:
     """Check whether approvers have access to a certifiable entity."""
-    return auth.post(_GQL, body=[{
+    return auth.post_read(_GQL, body=[{
         "operationName": "checkEntityAccess",
         "query": _CHECK_ENTITY_ACCESS_QUERY,
         "variables": {"entityType": entity_type, "entityId": entity_id, "approvers": approvers},
@@ -215,7 +215,7 @@ def certification_get_waiting_on_me_count(
     type: Annotated[str | None, "Certification type (default 'CC')"] = None,
 ) -> Any:
     """Get the count of certifications waiting on the current user."""
-    return auth.post(_GQL, body=[{
+    return auth.post_read(_GQL, body=[{
         "operationName": "getWaitingOnMeCount",
         "query": _WAITING_ON_ME_QUERY,
         "variables": {"type": type or "CC"},

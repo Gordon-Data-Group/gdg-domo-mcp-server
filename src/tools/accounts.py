@@ -31,7 +31,7 @@ def accounts_search(
     ],
 ) -> Any:
     """Search accounts using the global search API."""
-    return auth.post("/search/v1/query", body=body)
+    return auth.post_read("/search/v1/query", body=body)
 
 
 @domo_tool(toolset="accounts", read_only=True)
@@ -140,7 +140,7 @@ def accounts_get_datasets_used_bulk(
     account_ids: Annotated[list[int], "List of account IDs to look up"],
 ) -> Any:
     """Get datasets used by multiple accounts in a single request."""
-    return auth.post("/data/v2/datasources/accounts", body=account_ids)
+    return auth.post_read("/data/v2/datasources/accounts", body=account_ids)
 
 
 @domo_tool(toolset="accounts", read_only=True)
@@ -158,7 +158,7 @@ def accounts_validate_credentials(
         "credentials": credentials,
         "accountId": account_id,
     }
-    return auth.post("/data/v1/accounts/validators", body=body)
+    return auth.post_read("/data/v1/accounts/validators", body=body)
 
 
 @domo_tool(toolset="accounts", read_only=False)

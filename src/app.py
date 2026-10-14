@@ -7,21 +7,41 @@ from __future__ import annotations
 
 from functools import partial
 
+import os
+
 from mcp.server.fastmcp import FastMCP
 from mcp.server.lowlevel.server import NotificationOptions
 
-mcp = FastMCP(
-    "domo-mcp-server",
-    instructions=(
-        "MCP server for the Domo analytics platform. "
-        "Provides tools to read and write datasets, cards, pages, users, groups, "
-        "dataflows, alerts, and all other Domo resources. "
-        "All tools require DOMO_INSTANCE_URL and DOMO_DEVELOPER_TOKEN to be set. "
-        "By default the server is read-only (DOMO_READ_ONLY=1) and exposes every "
-        "toolset up front; set DOMO_DYNAMIC_TOOLSETS=1 to instead start with only "
-        "list_toolsets/enable_toolset and register other toolsets on demand."
-    ),
-)
+from src import auth
+
+
+def _instructions() -> str:
+    text = (
+        "MCP server for the Domo analytics platform: datasets, cards, pages, "
+        "users, groups, dataflows, alerts, and other Domo resources. "
+        "Tools that change Domo data are only available on instances where "
+        "read-only mode has been turned off."
+    )
+    configured = auth.instances()
+    if len(configured) > 1:
+        default = auth.default_alias()
+        listing = "; ".join(
+            f"{alias} = {os.environ.get(inst.env_prefix + 'INSTANCE_URL', '?')}"
+            f"{' (default)' if alias == default else ''}"
+            f"{'' if inst.read_only else ', writable'}"
+            for alias, inst in configured.items()
+        )
+        text += (
+            f" Several Domo instances are connected — every tool takes an "
+            f"`instance` argument selecting one: {listing}. "
+            "Pass `instance` explicitly whenever the user names an instance or "
+            "you are working with data from a non-default one."
+        )
+    return text
+
+
+# load_dotenv() has already run by the time src/server.py imports this module.
+mcp = FastMCP("domo-mcp-server", instructions=_instructions())
 
 # FastMCP always calls create_initialization_options() with no notification
 # options, which advertises tools.listChanged=False — but src/toolsets.py's

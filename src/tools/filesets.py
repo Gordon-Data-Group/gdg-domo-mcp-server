@@ -20,7 +20,7 @@ def filesets_list(
     offset: Annotated[int | None, "Pagination offset"] = None,
 ) -> Any:
     """List/search filesets."""
-    return auth.post("/files/v1/filesets/search", body=body, limit=limit, offset=offset)
+    return auth.post_read("/files/v1/filesets/search", body=body, limit=limit, offset=offset)
 
 
 @domo_tool(toolset="filesets", read_only=True)
@@ -36,7 +36,7 @@ def filesets_search_files(
     next: Annotated[str | None, "Pagination cursor"] = None,
 ) -> Any:
     """Search files in a fileset."""
-    return auth.post(
+    return auth.post_read(
         f"/files/v1/filesets/{fileset_id}/files/search",
         body=body,
         directoryPath=directory_path,
@@ -59,7 +59,7 @@ def filesets_query_with_ai(
         body["directoryPath"] = directory_path
     if top_k is not None:
         body["topK"] = top_k
-    return auth.post(f"/files/v1/filesets/{fileset_id}/query", body=body)
+    return auth.post_read(f"/files/v1/filesets/{fileset_id}/query", body=body)
 
 
 @domo_tool(toolset="filesets", read_only=True)
