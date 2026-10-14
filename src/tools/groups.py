@@ -52,7 +52,7 @@ def groups_get_bulk(
     include_users: Annotated[bool | None, "Include member user details"] = None,
 ) -> Any:
     """Get multiple groups by ID."""
-    return auth.post(
+    return auth.post_read(
         "/content/v2/groups/get",
         body=group_ids,
         includeActive=include_active,

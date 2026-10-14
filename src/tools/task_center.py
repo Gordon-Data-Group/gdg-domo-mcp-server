@@ -27,7 +27,7 @@ def task_center_search_queues(
     ],
 ) -> Any:
     """Search Task Center queues using the global search API."""
-    return auth.post("/search/v1/query", body=body)
+    return auth.post_read("/search/v1/query", body=body)
 
 
 @domo_tool(toolset="task_center", read_only=True)
@@ -44,7 +44,7 @@ def task_center_list_tasks(
     order_by: Annotated[str | None, "Sort field"] = None,
 ) -> Any:
     """List tasks across queues with filters."""
-    return auth.post(
+    return auth.post_read(
         "/queues/v1/tasks/list",
         body=body,
         limit=limit,

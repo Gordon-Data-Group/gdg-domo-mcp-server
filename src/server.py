@@ -6,21 +6,12 @@ Run locally:
 Run via entry point (after pip install -e .):
     domo-mcp-server
 
-Claude Desktop config (~/.claude/claude_desktop_config.json):
-    {
-      "mcpServers": {
-        "domo": {
-          "command": "domo-mcp-server",
-          "env": {
-            "DOMO_INSTANCE_URL": "https://yourcompany.domo.com",
-            "DOMO_DEVELOPER_TOKEN": "your_token"
-          }
-        }
-      }
-    }
+MCP client config: see .mcp.json.example (one server process can serve
+several Domo instances via DOMO_INSTANCES — see src/auth.py).
 """
 from __future__ import annotations
 
+import os
 import sys
 
 from dotenv import load_dotenv
@@ -85,13 +76,19 @@ def _startup_summary() -> str:
     registered = sum(t["registered_tool_count"] for t in summary)
     lines = [
         "domo-mcp-server starting",
-        f"  DOMO_READ_ONLY={'on' if auth.read_only_mode() else 'off'} "
-        f"({'write tools suppressed' if auth.read_only_mode() else 'write tools active — set DOMO_READ_ONLY=1 to disable'})",
+        f"  write tools {'suppressed (every instance is read-only)' if auth.all_instances_read_only() else 'registered'}",
         f"  DOMO_DYNAMIC_TOOLSETS={'on' if toolsets.dynamic_toolsets_enabled() else 'off'}",
         f"  tools registered at startup: {registered}/{total} "
         f"across {sum(1 for t in summary if t['enabled'])}/{len(summary)} toolsets "
         f"({sum(1 for t in summary if t['fully_enabled'])} fully enabled)",
     ]
+    default = auth.default_alias()
+    for alias, inst in auth.instances().items():
+        url = os.environ.get(f"{inst.env_prefix}INSTANCE_URL", "(DOMO_INSTANCE_URL not set)")
+        lines.append(
+            f"  instance {alias}{' (default)' if alias == default else ''}: {url} "
+            f"[{'read-only' if inst.read_only else 'read/write'}]"
+        )
     return "\n".join(lines)
 
 

@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Multi-instance support: one server process can serve several Domo instances via `DOMO_INSTANCES` + `DOMO_<ALIAS>_INSTANCE_URL` / `DOMO_<ALIAS>_DEVELOPER_TOKEN` (optional `DOMO_<ALIAS>_READ_ONLY`, `DOMO_DEFAULT_INSTANCE`). Every tool gains an `instance` argument when more than one is configured. The single-instance `DOMO_INSTANCE_URL` / `DOMO_DEVELOPER_TOKEN` form still works unchanged.
+- `DOMO_MAX_RESPONSE_CHARS` (default 50000) caps tool output; `DOMO_STRIP_NULLS` (default on) drops null fields from results.
+
+### Changed
+- Tool results are compact JSON instead of 2-space-indented JSON.
+- Input schemas no longer carry auto-generated `title`s, `default: null`, or `anyOf [X, null]` wrappers.
+- Consolidated 22 tools (529 → 507):
+  - `ai_text_sql_*`, `ai_text_generation_*`, `ai_text_beastmode_*`, `ai_text_summarize_*`, `ai_forecasting_*`, `ai_image_to_text_*` (18 tools) → `ai_services_list_models`, `ai_services_get_default_model`, `ai_services_run` with a `service` argument. `ai_forecasting_run` was a plain SQL query; use `datasets_query`.
+  - `datasets_query` + `datasets_query_sql` → `datasets_query(sql=… | query=…)`, which now also returns only `columns`, `rows`, `numRows`.
+  - `datasets_list_data_versions_v2` → `datasets_list_data_versions(api_version="v2")`.
+  - `datasets_bulk_update_owners_v1` → `datasets_bulk_update_owners(group_id=…)`.
+  - `users_get_v2` / `users_get_v3` → `users_get(api=…)`; `users_list_v3` → `users_list(api="content_v3")`; `users_update_v3` → `users_update(full_user=…)`.
+
+### Fixed
+- Parameter descriptions were silently dropped from every tool's schema (`Annotated[T, "text"]` is ignored by Pydantic); they are now sent as JSON-schema descriptions.
+- 54 read-only tools backed by POST or PUT endpoints (search, query, bulk-get, card render/definition) were blocked by the write guard under the default `DOMO_READ_ONLY=1`. They now use the unguarded `auth.post_read` / `auth.put_read` verbs.
+
 ## [0.0.1] - 2026-05-22
 
 ### Initial Release

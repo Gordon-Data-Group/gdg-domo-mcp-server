@@ -18,7 +18,7 @@ def functions_list(
     ],
 ) -> Any:
     """List/search beast mode functions."""
-    return auth.post("/query/v1/functions/search", body=body)
+    return auth.post_read("/query/v1/functions/search", body=body)
 
 
 @domo_tool(toolset="functions", read_only=True)
@@ -26,7 +26,7 @@ def functions_get_bulk(
     ids: Annotated[list[str], "List of function IDs to fetch"],
 ) -> Any:
     """Get multiple functions by ID."""
-    return auth.post("/query/v1/functions/list/id", body={"ids": ids})
+    return auth.post_read("/query/v1/functions/list/id", body={"ids": ids})
 
 
 @domo_tool(toolset="functions", read_only=True)

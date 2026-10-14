@@ -28,7 +28,7 @@ def pages_list_admin_summary(
     skip: Annotated[int | None, "Pagination offset"] = None,
 ) -> Any:
     """List pages with admin-level metadata using flexible filters."""
-    return auth.post("/content/v1/pages/adminsummary", body=body, limit=limit, skip=skip)
+    return auth.post_read("/content/v1/pages/adminsummary", body=body, limit=limit, skip=skip)
 
 
 @domo_tool(toolset="pages", read_only=True)

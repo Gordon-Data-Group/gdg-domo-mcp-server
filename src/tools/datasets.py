@@ -4,7 +4,7 @@ API reference: api-definitions-md/17-datasets-and-streams.md
 """
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from src.toolsets import domo_tool
 from src import auth
@@ -17,7 +17,7 @@ def datasets_search(
     body: Annotated[dict[str, Any], "Search body. Key fields: query (wildcard string), filters (list), count (int), offset (int), sort"],
 ) -> Any:
     """Search DataSets using Domo's search engine. Returns matching datasets with metadata."""
-    return auth.post("/data/ui/v3/datasources/search", body=body)
+    return auth.post_read("/data/ui/v3/datasources/search", body=body)
 
 
 @domo_tool(toolset="datasets", read_only=True)
@@ -64,7 +64,7 @@ def datasets_get_bulk(
     include_all_details: Annotated[bool | None, "Include full schema and metadata"] = None,
 ) -> Any:
     """Fetch multiple DataSets by UUID in a single request."""
-    return auth.post(
+    return auth.post_read(
         "/data/v3/datasources/bulk",
         body=dataset_ids,
         includePrivate=include_private,
@@ -77,7 +77,7 @@ def datasets_get_owned_by(
     owners: Annotated[list[dict[str, Any]], "Owner filter list, e.g. [{'id': 1234, 'type': 'USER'}] or [{'id': 5, 'type': 'GROUP'}]"],
 ) -> Any:
     """Get all DataSets owned by specific users or groups."""
-    return auth.post("/data/ui/v3/datasources/ownedBy", body=owners)
+    return auth.post_read("/data/ui/v3/datasources/ownedBy", body=owners)
 
 
 @domo_tool(toolset="datasets", read_only=True)
@@ -151,19 +151,21 @@ def datasets_get_wrangle(
 @domo_tool(toolset="datasets", read_only=True)
 def datasets_query(
     dataset_id: Annotated[str, "Dataset UUID"],
-    body: Annotated[dict[str, Any], "Structured query body. Must contain a 'query' object with columns, limit/offset, and optional where/groupByColumns/orderByColumns. See API docs for full schema."],
+    sql: Annotated[str | None, "SQL SELECT to run; the dataset is referenced as `table`, e.g. SELECT region, SUM(amount) FROM table GROUP BY region"] = None,
+    query: Annotated[
+        dict[str, Any] | None,
+        "Alternative to sql: Domo structured query object with columns, limit/offset, and optional where/groupByColumns/orderByColumns",
+    ] = None,
 ) -> Any:
-    """Query a DataSet using Domo's structured query format. Use datasets_query_sql for SQL instead."""
-    return auth.post(f"/query/v1/execute/{dataset_id}", body=body)
-
-
-@domo_tool(toolset="datasets", read_only=True)
-def datasets_query_sql(
-    dataset_id: Annotated[str, "Dataset UUID"],
-    sql: Annotated[str, "SQL SELECT statement to run against the dataset"],
-) -> Any:
-    """Query a DataSet with a SQL SELECT statement. Returns rows and column metadata."""
-    return auth.post(f"/query/v1/execute/{dataset_id}", body={"sql": sql})
+    """Query a DataSet. Returns {columns, rows, numRows}; use LIMIT for large datasets."""
+    if (sql is None) == (query is None):
+        raise ValueError("Provide exactly one of sql or query.")
+    body = {"sql": sql} if sql is not None else {"query": query}
+    result = auth.post_read(f"/query/v1/execute/{dataset_id}", body=body)
+    if isinstance(result, dict) and "rows" in result:
+        # Drop per-column metadata and datasource echo; the model only needs the grid.
+        return {k: result[k] for k in ("columns", "rows", "numRows") if k in result}
+    return result
 
 
 @domo_tool(toolset="datasets", read_only=True)
@@ -171,7 +173,7 @@ def datasets_query_preview(
     body: Annotated[dict[str, Any], "Views Explorer query-preview body with schema, query, viewTemplate, and tableAliases fields"],
 ) -> Any:
     """Run a query preview in the Views Explorer (for Views-based datasets)."""
-    return auth.post("/query/v1/views/query-preview", body=body)
+    return auth.post_read("/query/v1/views/query-preview", body=body)
 
 
 @domo_tool(toolset="datasets", read_only=False)
@@ -265,29 +267,19 @@ def datasets_update_owner(
 
 @domo_tool(toolset="datasets", read_only=False)
 def datasets_bulk_update_owners(
-    user_id: Annotated[str, "User ID who will become owner of all specified datasets"],
     dataset_ids: Annotated[list[str], "List of dataset UUIDs to reassign"],
+    user_id: Annotated[str | None, "User ID of the new owner (provide user_id or group_id, not both)"] = None,
+    group_id: Annotated[str | None, "Group ID of the new owner (provide user_id or group_id, not both)"] = None,
 ) -> Any:
-    """Reassign ownership of multiple DataSets to a single user (v2 endpoint)."""
-    return auth.put(
-        f"/data/v2/datasources/responsible-user/{user_id}",
-        body=dataset_ids,
-    )
-
-
-@domo_tool(toolset="datasets", read_only=False)
-def datasets_bulk_update_owners_v1(
-    dataset_ids: Annotated[list[str], "List of dataset UUIDs to reassign"],
-    user_id: Annotated[int | None, "User ID of the new owner (provide user_id or group_id, not both)"] = None,
-    group_id: Annotated[int | None, "Group ID of the new owner (provide user_id or group_id, not both)"] = None,
-) -> Any:
-    """Bulk reassign DataSet ownership (v1 endpoint). Provide either user_id or group_id."""
-    body: dict[str, Any] = {"type": "DATA_SOURCE", "ids": dataset_ids}
+    """Reassign ownership of multiple DataSets to a single user or group."""
+    if (user_id is None) == (group_id is None):
+        raise ValueError("Provide exactly one of user_id or group_id.")
     if user_id is not None:
-        body["userId"] = user_id
-    if group_id is not None:
-        body["groupId"] = group_id
-    return auth.post("/data/v1/ui/bulk/reassign", body=body)
+        return auth.put(f"/data/v2/datasources/responsible-user/{user_id}", body=dataset_ids)
+    return auth.post(
+        "/data/v1/ui/bulk/reassign",
+        body={"type": "DATA_SOURCE", "ids": dataset_ids, "groupId": int(group_id)},
+    )
 
 
 @domo_tool(toolset="datasets", read_only=False)
@@ -332,7 +324,7 @@ def datasets_delete_check(
     dataset_ids: Annotated[list[str], "Dataset UUIDs to check before deletion"],
 ) -> Any:
     """Preview what cards, dataflows, and other resources would be affected by deleting these DataSets."""
-    return auth.post(
+    return auth.post_read(
         "/data/v1/ui/bulk/delete/check",
         body={"type": "DATA_SOURCE", "ids": dataset_ids},
     )
@@ -437,17 +429,15 @@ def datasets_update_data_dictionary(
 @domo_tool(toolset="datasets", read_only=True)
 def datasets_list_data_versions(
     dataset_id: Annotated[str, "Dataset UUID"],
+    api_version: Annotated[
+        Literal["v3", "v2"],
+        "v3 returns detailed metadata for retained versions; v2 returns every version ID, including older ones v3 omits",
+    ] = "v3",
 ) -> Any:
-    """List available historical data versions (snapshots) for a DataSet (v3)."""
+    """List historical data versions (snapshots) for a DataSet."""
+    if api_version == "v2":
+        return auth.get(f"/data/v2/datasources/{dataset_id}/dataversions")
     return auth.get(f"/data/v3/datasources/{dataset_id}/dataversions/details")
-
-
-@domo_tool(toolset="datasets", read_only=True)
-def datasets_list_data_versions_v2(
-    dataset_id: Annotated[str, "Dataset UUID"],
-) -> Any:
-    """List available historical data versions for a DataSet (v2)."""
-    return auth.get(f"/data/v2/datasources/{dataset_id}/dataversions")
 
 
 @domo_tool(toolset="datasets", read_only=True)
