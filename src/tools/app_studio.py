@@ -38,7 +38,7 @@ def app_studio_list_admin_summary(
     skip: Annotated[int | None, "Pagination offset"] = None,
 ) -> Any:
     """List apps with admin summary information."""
-    return auth.post(
+    return auth.post_read(
         "/content/v1/dataapps/adminsummary",
         body=body,
         limit=limit,

@@ -18,7 +18,7 @@ def sandbox_list_repositories(
     ] = None,
 ) -> Any:
     """List sandbox repositories."""
-    return auth.post(
+    return auth.post_read(
         "/version/v1/repositories/search",
         body=body or {"query": {"offset": 0, "limit": 50, "fieldSearchMap": {}, "sort": "started", "order": "desc", "filters": {}, "dateFilters": {}}, "shared": True},
     )
@@ -32,7 +32,7 @@ def sandbox_list_promotion_history(
     ] = None,
 ) -> Any:
     """List sandbox promotion history."""
-    return auth.post(
+    return auth.post_read(
         "/version/v1/promotions/search",
         body=body or {"offset": 0, "limit": 500, "filters": {}, "fieldSearchMap": {}, "sort": "completed", "order": "desc", "searchDistinct": False, "dateFilters": {}},
     )
@@ -46,7 +46,7 @@ def sandbox_list_commit_history(
     ] = None,
 ) -> Any:
     """List sandbox commit request history."""
-    return auth.post(
+    return auth.post_read(
         "/version/v1/commitRequests/search",
         body=body or {"offset": 0, "limit": 500, "filters": {}, "fieldSearchMap": {}, "sort": "completed", "order": "desc", "searchDistinct": False, "dateFilters": {}},
     )

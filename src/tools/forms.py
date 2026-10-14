@@ -23,7 +23,7 @@ def forms_search(
     ],
 ) -> Any:
     """Search forms using the global search API."""
-    return auth.post("/search/v1/query", body=body)
+    return auth.post_read("/search/v1/query", body=body)
 
 
 @domo_tool(toolset="forms", read_only=True)

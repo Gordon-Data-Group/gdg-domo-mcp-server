@@ -4,7 +4,7 @@ API reference: api-definitions-md/04-ai-data-science.md
 """
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from src.toolsets import domo_tool
 from src import auth
@@ -91,7 +91,7 @@ def ai_models_list(
     ],
 ) -> Any:
     """List or search user-generated AI models."""
-    return auth.post("/datascience/ml/v1/search/models", body=body)
+    return auth.post_read("/datascience/ml/v1/search/models", body=body)
 
 
 @domo_tool(toolset="ai_data_science", read_only=True)
@@ -154,7 +154,7 @@ def ai_projects_list(
     ],
 ) -> Any:
     """List or search AI projects."""
-    return auth.post("/datascience/ml/v1/search/projects", body=body)
+    return auth.post_read("/datascience/ml/v1/search/projects", body=body)
 
 
 @domo_tool(toolset="ai_data_science", read_only=True)
@@ -200,185 +200,61 @@ def ai_projects_delete(
 
 
 # ---------------------------------------------------------------------------
-# AI Service Layer — Text to SQL
+# AI Service Layer — Text to SQL / Text Generation / Beast Mode /
+# Summarization / Forecasting / Image to Text
 # ---------------------------------------------------------------------------
 
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_text_sql_list_models() -> Any:
-    """List available models for the Text to SQL service."""
-    return auth.get("/ai/v1/settings/services/sql/models")
+AIService = Literal["sql", "generation", "beastmode", "summarization", "forecasting", "image"]
+AIRunService = Literal["sql", "generation", "beastmode", "summarization", "image"]
+
+_AI_RUN_PATHS = {
+    "sql": "/ai/v1/text/sql",
+    "generation": "/ai/v1/text/generation",
+    "beastmode": "/ai/v1/text/beastmode",
+    "summarization": "/ai/v1/text/summarize",
+    "image": "/ai/v1/image/text",
+}
 
 
 @domo_tool(toolset="ai_data_science", read_only=True)
-def ai_text_sql_get_default_model() -> Any:
-    """Get the default model configured for the Text to SQL service."""
-    return auth.get("/ai/v1/settings/services/sql/models/default")
+def ai_services_list_models(
+    service: Annotated[AIService, "AI service: sql (Text to SQL), generation, beastmode, summarization, forecasting, image (Image to Text)"],
+) -> Any:
+    """List the models available to a Domo AI service."""
+    return auth.get(f"/ai/v1/settings/services/{service}/models")
+
+
+@domo_tool(toolset="ai_data_science", read_only=True)
+def ai_services_get_default_model(
+    service: Annotated[AIService, "AI service: sql (Text to SQL), generation, beastmode, summarization, forecasting, image (Image to Text)"],
+) -> Any:
+    """Get the default model configured for a Domo AI service."""
+    return auth.get(f"/ai/v1/settings/services/{service}/models/default")
 
 
 @domo_tool(toolset="ai_data_science", read_only=False)
-def ai_text_sql_run(
+def ai_services_run(
+    service: Annotated[AIRunService, "AI service to run"],
     body: Annotated[
         dict[str, Any],
         (
-            "Request body. Required: input (str natural language query), "
-            "dataSourceSchemas (list of {dataSourceName, columns: [{name, type}]}). "
-            "Optional: model (str model ID), system (str system prompt), "
-            "promptTemplate ({template: str})"
+            "Request body. All services accept optional model (str model ID) and "
+            "promptTemplate ({template: str}); all but generation accept system (str). "
+            "Required by service — "
+            "sql: input (natural language question), dataSourceSchemas (list of "
+            "{dataSourceName, columns: [{name, type}]}); "
+            "generation: input (prompt); "
+            "beastmode: input (natural language request), dataSourceSchema "
+            "({dataSourceName, columns: [{name, type}]}); "
+            "summarization: input (text to summarize); "
+            "image: input (instructions), image ({mediaType, type: 'base64', data})"
         ),
     ],
 ) -> Any:
-    """Generate a SQL query from a natural language input using the AI service."""
-    return auth.post("/ai/v1/text/sql", body=body)
-
-
-# ---------------------------------------------------------------------------
-# AI Service Layer — Text Generation
-# ---------------------------------------------------------------------------
-
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_text_generation_list_models() -> Any:
-    """List available models for the Text Generation service."""
-    return auth.get("/ai/v1/settings/services/generation/models")
-
-
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_text_generation_get_default_model() -> Any:
-    """Get the default model configured for the Text Generation service."""
-    return auth.get("/ai/v1/settings/services/generation/models/default")
-
-
-@domo_tool(toolset="ai_data_science", read_only=False)
-def ai_text_generation_run(
-    body: Annotated[
-        dict[str, Any],
-        (
-            "Request body. Required: input (str prompt text). "
-            "Optional: model (str model ID), promptTemplate ({template: str})"
-        ),
-    ],
-) -> Any:
-    """Generate text using the AI service."""
-    return auth.post("/ai/v1/text/generation", body=body)
-
-
-# ---------------------------------------------------------------------------
-# AI Service Layer — Text to Beast Mode
-# ---------------------------------------------------------------------------
-
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_text_beastmode_list_models() -> Any:
-    """List available models for the Text to Beast Mode service."""
-    return auth.get("/ai/v1/settings/services/beastmode/models")
-
-
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_text_beastmode_get_default_model() -> Any:
-    """Get the default model configured for the Text to Beast Mode service."""
-    return auth.get("/ai/v1/settings/services/beastmode/models/default")
-
-
-@domo_tool(toolset="ai_data_science", read_only=False)
-def ai_text_beastmode_run(
-    body: Annotated[
-        dict[str, Any],
-        (
-            "Request body. Required: input (str natural language request), "
-            "dataSourceSchema ({dataSourceName, columns: [{name, type}]}). "
-            "Optional: model (str model ID), system (str system prompt), "
-            "promptTemplate ({template: str})"
-        ),
-    ],
-) -> Any:
-    """Generate a Beast Mode (calculated field) SQL expression from natural language."""
-    return auth.post("/ai/v1/text/beastmode", body=body)
-
-
-# ---------------------------------------------------------------------------
-# AI Service Layer — Text Summarization
-# ---------------------------------------------------------------------------
-
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_text_summarize_list_models() -> Any:
-    """List available models for the Text Summarization service."""
-    return auth.get("/ai/v1/settings/services/summarization/models")
-
-
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_text_summarize_get_default_model() -> Any:
-    """Get the default model configured for the Text Summarization service."""
-    return auth.get("/ai/v1/settings/services/summarization/models/default")
-
-
-@domo_tool(toolset="ai_data_science", read_only=False)
-def ai_text_summarize_run(
-    body: Annotated[
-        dict[str, Any],
-        (
-            "Request body. Required: input (str text to summarize). "
-            "Optional: model (str model ID), system (str system prompt), "
-            "promptTemplate ({template: str})"
-        ),
-    ],
-) -> Any:
-    """Summarize text using the AI service."""
-    return auth.post("/ai/v1/text/summarize", body=body)
-
-
-# ---------------------------------------------------------------------------
-# AI Service Layer — Forecasting
-# ---------------------------------------------------------------------------
-
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_forecasting_list_models() -> Any:
-    """List available models for the Forecasting service."""
-    return auth.get("/ai/v1/settings/services/forecasting/models")
-
-
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_forecasting_get_default_model() -> Any:
-    """Get the default model configured for the Forecasting service."""
-    return auth.get("/ai/v1/settings/services/forecasting/models/default")
-
-
-@domo_tool(toolset="ai_data_science", read_only=False)
-def ai_forecasting_run(
-    dataset_id: Annotated[str, "Dataset ID to run the forecast query against"],
-    sql: Annotated[str, "SQL query selecting the date and value columns for forecasting"],
-) -> Any:
-    """Run a forecasting query against a dataset."""
-    return auth.post(f"/query/v1/execute/{dataset_id}", body={"sql": sql})
-
-
-# ---------------------------------------------------------------------------
-# AI Service Layer — Image to Text
-# ---------------------------------------------------------------------------
-
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_image_to_text_list_models() -> Any:
-    """List available models for the Image to Text service."""
-    return auth.get("/ai/v1/settings/services/image/models")
-
-
-@domo_tool(toolset="ai_data_science", read_only=True)
-def ai_image_to_text_get_default_model() -> Any:
-    """Get the default model configured for the Image to Text service."""
-    return auth.get("/ai/v1/settings/services/image/models/default")
-
-
-@domo_tool(toolset="ai_data_science", read_only=False)
-def ai_image_to_text_run(
-    body: Annotated[
-        dict[str, Any],
-        (
-            "Request body. Required: input (str instructions), "
-            "image ({mediaType: str, type: 'base64', data: str base64-encoded image}). "
-            "Optional: model (str model ID), system (str system prompt), "
-            "promptTemplate ({template: str})"
-        ),
-    ],
-) -> Any:
-    """Extract or describe text from an image using the AI service."""
-    return auth.post("/ai/v1/image/text", body=body)
+    """Run a Domo AI service: generate SQL or a Beast Mode expression from natural
+    language, generate or summarize text, or extract text from an image. Consumes
+    AI credits. To run a forecast query, use datasets_query with SQL."""
+    return auth.post(_AI_RUN_PATHS[service], body=body)
 
 
 # ---------------------------------------------------------------------------
@@ -519,7 +395,7 @@ def ai_jupyter_list_workspaces(
     ],
 ) -> Any:
     """List or search Jupyter workspaces."""
-    return auth.post("/datascience/v1/search/workspaces", body=body)
+    return auth.post_read("/datascience/v1/search/workspaces", body=body)
 
 
 @domo_tool(toolset="ai_data_science", read_only=True)

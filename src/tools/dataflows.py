@@ -25,7 +25,7 @@ def dataflows_search(
     ],
 ) -> Any:
     """Search DataFlows using the global search API."""
-    return auth.post("/search/v1/query", body=body)
+    return auth.post_read("/search/v1/query", body=body)
 
 
 @domo_tool(toolset="dataflows", read_only=True)
@@ -195,7 +195,7 @@ def dataflows_run_preview(
     ],
 ) -> Any:
     """Run a DataFlow preview without persisting results."""
-    return auth.post("/dataprocessing/v1/dataflows/previews/run", body=body)
+    return auth.post_read("/dataprocessing/v1/dataflows/previews/run", body=body)
 
 
 @domo_tool(toolset="dataflows", read_only=False)

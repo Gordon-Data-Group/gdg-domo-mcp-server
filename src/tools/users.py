@@ -4,7 +4,7 @@ API reference: api-definitions-md/35-users.md
 """
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from src.toolsets import domo_tool
 from src import auth
@@ -26,27 +26,21 @@ def users_search(
     explain: Annotated[bool | None, "Return query explanation instead of results"] = None,
 ) -> Any:
     """Search users with filters, sorting, and field selection."""
-    return auth.post("/identity/v1/users/search", body=body, explain=explain)
+    return auth.post_read("/identity/v1/users/search", body=body, explain=explain)
 
 
 @domo_tool(toolset="users", read_only=True)
 def users_list(
     limit: Annotated[int | None, "Max users to return"] = None,
     offset: Annotated[int | None, "Pagination offset"] = None,
-    attributes: Annotated[str | None, "Comma-separated list of attributes to include"] = None,
+    attributes: Annotated[str | None, "identity API only: comma-separated attributes to include"] = None,
+    active: Annotated[bool | None, "content_v3 API only: filter by active status"] = None,
+    api: Annotated[Literal["identity", "content_v3"], "identity (/identity/v1, attribute selection) or content_v3 (/content/v3, active filter)"] = "identity",
 ) -> Any:
-    """List users via identity/v1 with optional pagination and field selection."""
+    """List users with optional pagination."""
+    if api == "content_v3":
+        return auth.get("/content/v3/users/", limit=limit, offset=offset, active=active)
     return auth.get("/identity/v1/users/", limit=limit, offset=offset, attributes=attributes)
-
-
-@domo_tool(toolset="users", read_only=True)
-def users_list_v3(
-    limit: Annotated[int | None, "Max users to return"] = None,
-    offset: Annotated[int | None, "Pagination offset"] = None,
-    active: Annotated[bool | None, "Filter by active status"] = None,
-) -> Any:
-    """List users via content/v3 with optional active filter."""
-    return auth.get("/content/v3/users/", limit=limit, offset=offset, active=active)
 
 
 @domo_tool(toolset="users", read_only=True)
@@ -60,27 +54,19 @@ def users_get_bulk(
 @domo_tool(toolset="users", read_only=True)
 def users_get(
     user_id: Annotated[str, "User ID"],
-    attributes: Annotated[str | None, "Comma-separated list of attributes to return"] = None,
-    parts: Annotated[str | None, "Comma-separated parts: DETAILED, GROUPS, ROLE, MINIMAL"] = None,
+    attributes: Annotated[str | None, "identity API only: comma-separated attributes to return"] = None,
+    parts: Annotated[str | None, "identity API only: comma-separated parts: DETAILED, GROUPS, ROLE, MINIMAL"] = None,
+    api: Annotated[
+        Literal["identity", "content_v2", "content_v3"],
+        "identity (/identity/v1, attribute/part selection), content_v2 (full profile detail: title, department, etc.), or content_v3",
+    ] = "identity",
 ) -> Any:
-    """Get a single user by ID via identity/v1."""
+    """Get a single user by ID."""
+    if api == "content_v2":
+        return auth.get(f"/content/v2/users/{user_id}")
+    if api == "content_v3":
+        return auth.get(f"/content/v3/users/{user_id}")
     return auth.get(f"/identity/v1/users/{user_id}", attributes=attributes, parts=parts)
-
-
-@domo_tool(toolset="users", read_only=True)
-def users_get_v2(
-    user_id: Annotated[str, "User ID"],
-) -> Any:
-    """Get a single user by ID via content/v2."""
-    return auth.get(f"/content/v2/users/{user_id}")
-
-
-@domo_tool(toolset="users", read_only=True)
-def users_get_v3(
-    user_id: Annotated[str, "User ID"],
-) -> Any:
-    """Get a single user by ID via content/v3."""
-    return auth.get(f"/content/v3/users/{user_id}")
 
 
 @domo_tool(toolset="users", read_only=True)
@@ -127,29 +113,26 @@ def users_create(
 def users_update(
     user_id: Annotated[str, "User ID"],
     attributes: Annotated[
-        list[dict[str, Any]],
-        "List of attribute patches, each with 'key' (attribute name) and 'values' (list of strings)",
-    ],
-) -> Any:
-    """Patch a user's attributes via identity/v1 (partial update)."""
-    return auth.patch(f"/identity/v1/users/{user_id}", body={"attributes": attributes})
-
-
-@domo_tool(toolset="users", read_only=False)
-def users_update_v3(
-    body: Annotated[
-        dict[str, Any],
+        list[dict[str, Any]] | None,
+        "Partial update (identity/v1 PATCH): list of attribute patches, each with 'key' (attribute name) and 'values' (list of strings)",
+    ] = None,
+    full_user: Annotated[
+        dict[str, Any] | None,
         (
-            "Full user object to replace. Required: id (int). Optional top-level keys: "
-            "displayName, avatarKey, role, roleId, invitorUserId, detail (title, email, "
-            "alternateEmail, phoneNumber, deskPhoneNumber, employeeNumber, pending, location, "
-            "timeZone, locale, active, department, employeeId, hireDate, subjectId), "
-            "trial, socialDetail, groups"
+            "Full replace (content/v3 PUT) — pass instead of attributes. Complete user object; "
+            "id is set from user_id. Must include invitorUserId and detail.pending. Other keys: "
+            "displayName, avatarKey, role, roleId, detail (title, email, alternateEmail, "
+            "phoneNumber, deskPhoneNumber, employeeNumber, location, timeZone, locale, active, "
+            "department, employeeId, hireDate, subjectId), trial, socialDetail, groups"
         ),
-    ],
+    ] = None,
 ) -> Any:
-    """Replace a user record via content/v3 (full update)."""
-    return auth.put("/content/v3/users", body=body)
+    """Update a user: patch specific attributes, or replace the whole user record."""
+    if (attributes is None) == (full_user is None):
+        raise ValueError("Provide exactly one of attributes (partial update) or full_user (full replace).")
+    if full_user is not None:
+        return auth.put("/content/v3/users", body={**full_user, "id": int(user_id)})
+    return auth.patch(f"/identity/v1/users/{user_id}", body={"attributes": attributes})
 
 
 @domo_tool(toolset="users", read_only=False)

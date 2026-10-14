@@ -5,10 +5,13 @@ Every domain tool module (src/tools/*.py) registers its tools through the
 directly. That indirection is what makes two things possible:
 
 1. DOMO_READ_ONLY (default "1" — read-only): tools tagged `read_only=False`
-   are simply never attached to the server unless an operator explicitly
-   sets DOMO_READ_ONLY=0. This is belt-and-suspenders with the enforcement
-   in src/auth.py, which blocks mutating HTTP verbs outright — so even a
-   mis-tagged tool can't reach a write endpoint.
+   are simply never attached to the server unless at least one configured
+   instance has read-only turned off (DOMO_READ_ONLY=0 or a per-instance
+   DOMO_<ALIAS>_READ_ONLY=0). This is belt-and-suspenders with the
+   enforcement in src/auth.py, which blocks mutating HTTP verbs per call for
+   whichever instance the call targets — so even a mis-tagged tool can't
+   reach a write endpoint. Read-only tools whose endpoint happens to be a
+   POST/PUT (search, query, bulk-get) must call auth.post_read/put_read.
 
 2. DOMO_DYNAMIC_TOOLSETS (default "0" — off): when enabled, domain tools are
    *not* registered at startup. Only two meta-tools are exposed —
@@ -18,6 +21,12 @@ directly. That indirection is what makes two things possible:
    toolsets out of the ~35 available. DOMO_DEFAULT_TOOLSETS (comma-separated)
    can pre-enable specific toolsets at startup even in dynamic mode.
 
+Registration also wraps each tool (see _build_tool_fn): string metadata in
+Annotated[...] becomes a real schema description, an `instance` argument is
+added when several Domo instances are configured, schemas are slimmed of
+token-wasting boilerplate, and results are returned as compact JSON capped
+at DOMO_MAX_RESPONSE_CHARS.
+
 Every tool module must still be *imported* unconditionally (see
 src/server.py) so its `domo_tool`-decorated functions run and populate the
 registry below — dynamic mode defers *registration*, not *import*, which is
@@ -25,14 +34,17 @@ cheap (no I/O, just function definitions).
 """
 from __future__ import annotations
 
+import inspect
+import json
 import os
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Annotated, Any, Callable, Literal, get_args, get_origin, get_type_hints
 
 from mcp.server.fastmcp import Context
 from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from src import auth
 from src.app import mcp
@@ -93,7 +105,7 @@ def domo_tool(toolset: str, read_only: bool) -> Callable[[Callable[..., Any]], C
         _registry[name] = record
         _by_toolset[toolset].append(name)
 
-        if auth.read_only_mode() and not read_only:
+        if auth.all_instances_read_only() and not read_only:
             return func  # write tool suppressed under read-only mode
 
         if dynamic_toolsets_enabled():
@@ -111,11 +123,138 @@ def _register(record: ToolRecord) -> None:
     if record.registered:
         return
     mcp.add_tool(
-        record.func,
+        _build_tool_fn(record.func),
         name=record.name,
         annotations=ToolAnnotations(readOnlyHint=record.read_only),
+        structured_output=False,
     )
+    tool = mcp._tool_manager.get_tool(record.name)
+    tool.parameters = _slim_schema(tool.parameters)
     record.registered = True
+
+
+# ---------------------------------------------------------------------------
+# Tool function wrapping — schema shaping, instance routing, output shaping
+# ---------------------------------------------------------------------------
+
+def _max_response_chars() -> int:
+    """DOMO_MAX_RESPONSE_CHARS (default 50000; 0 disables truncation)."""
+    try:
+        return int(os.environ.get("DOMO_MAX_RESPONSE_CHARS", "50000"))
+    except ValueError:
+        return 50000
+
+
+def _strip_nulls(value: Any) -> Any:
+    """Drop null-valued dict keys, recursively. List positions are preserved
+    (query rows are positional), so nulls inside lists are kept."""
+    if isinstance(value, dict):
+        return {k: _strip_nulls(v) for k, v in value.items() if v is not None}
+    if isinstance(value, list):
+        return [_strip_nulls(v) for v in value]
+    return value
+
+
+def format_result(result: Any) -> str:
+    """Serialize a tool's return value for the model: compact JSON, nulls
+    removed (unless DOMO_STRIP_NULLS=0), capped at DOMO_MAX_RESPONSE_CHARS.
+
+    FastMCP's default is indent=2 JSON, which puts every scalar of a nested
+    payload on its own indented line — expensive for query rows and lists.
+    """
+    if result is None:
+        return "Success (empty response)."
+    if isinstance(result, str):
+        text = result
+    else:
+        if _env_bool("DOMO_STRIP_NULLS", "1"):
+            result = _strip_nulls(result)
+        text = json.dumps(result, separators=(",", ":"), ensure_ascii=False, default=str)
+    limit = _max_response_chars()
+    if limit > 0 and len(text) > limit:
+        text = (
+            f"{text[:limit]}\n…[truncated: showing {limit:,} of {len(text):,} characters. "
+            "Narrow the request with limit/offset, filters, or a more selective query.]"
+        )
+    return text
+
+
+def _describe(annotation: Any) -> Any:
+    """Turn Annotated[T, "text"] into Annotated[T, Field(description="text")].
+
+    Pydantic ignores bare strings in Annotated metadata, so without this every
+    parameter description written in src/tools/*.py would be silently dropped
+    from the JSON schema the model sees.
+    """
+    if get_origin(annotation) is not Annotated:
+        return annotation
+    base, *meta = get_args(annotation)
+    meta = [Field(description=m) if isinstance(m, str) else m for m in meta]
+    return Annotated[(base, *meta)]
+
+
+def _build_tool_fn(func: Callable[..., Any]) -> Callable[..., str]:
+    """Wrap a tool function with the signature/behaviour FastMCP should expose.
+
+    - parameter descriptions become real Field descriptions (see _describe)
+    - when several Domo instances are configured, an `instance` argument is
+      appended and the call runs against that instance
+    - the return value is serialized by format_result
+    """
+    hints = get_type_hints(func, include_extras=True)
+    sig = inspect.signature(func)
+    params = [p.replace(annotation=_describe(hints.get(p.name, p.annotation)))
+              for p in sig.parameters.values()]
+
+    aliases = list(auth.instances())
+    if len(aliases) > 1:
+        params.append(
+            inspect.Parameter(
+                "instance",
+                inspect.Parameter.KEYWORD_ONLY,
+                default=auth.default_alias(),
+                annotation=Literal[tuple(aliases)],
+            )
+        )
+
+    def wrapper(**kwargs: Any) -> str:
+        with auth.use_instance(kwargs.pop("instance", None)):
+            return format_result(func(**kwargs))
+
+    wrapper.__name__ = func.__name__
+    wrapper.__doc__ = func.__doc__
+    wrapper.__signature__ = sig.replace(parameters=params, return_annotation=str)  # type: ignore[attr-defined]
+    return wrapper
+
+
+def _slim_schema(schema: Any) -> Any:
+    """Remove JSON-schema noise that costs tokens without informing the model:
+    auto-generated `title`s, `default: null`, and `anyOf: [X, {type: null}]`
+    wrappers around optional parameters (optional-ness is already conveyed by
+    absence from `required`)."""
+    if isinstance(schema, list):
+        return [_slim_schema(s) for s in schema]
+    if not isinstance(schema, dict):
+        return schema
+    out = {}
+    for key, value in schema.items():
+        if key == "title" and isinstance(value, str):
+            continue
+        if key == "default" and value is None:
+            continue
+        # "properties" maps names → schemas; a property literally called
+        # "title" must survive, so recurse into each value, not the mapping keys.
+        if key == "properties" and isinstance(value, dict):
+            out[key] = {name: _slim_schema(sub) for name, sub in value.items()}
+            continue
+        out[key] = _slim_schema(value)
+    variants = out.get("anyOf")
+    if isinstance(variants, list):
+        non_null = [v for v in variants if v != {"type": "null"}]
+        if len(non_null) == 1 and len(non_null) < len(variants):
+            del out["anyOf"]
+            out = {**non_null[0], **out}
+    return out
 
 
 def toolsets_summary() -> list[dict[str, Any]]:
@@ -151,7 +290,7 @@ def enable_toolset_by_name(toolset: str) -> dict[str, Any]:
     skipped_read_only = []
     for name in _by_toolset[toolset]:
         record = _registry[name]
-        if auth.read_only_mode() and not record.read_only:
+        if auth.all_instances_read_only() and not record.read_only:
             skipped_read_only.append(name)
             continue
         if record.registered:
@@ -176,7 +315,7 @@ def register_meta_tools() -> None:
         "cards", "users"), its tool counts, and whether it's currently
         enabled. Call this first to discover what's available, then call
         enable_toolset with a name from this list to register its tools."""
-        return toolsets_summary()
+        return format_result(toolsets_summary())
 
     @mcp.tool()
     async def enable_toolset(toolset: str, ctx: Context) -> Any:
@@ -185,12 +324,12 @@ def register_meta_tools() -> None:
         Args:
             toolset: A toolset name returned by list_toolsets (e.g. "datasets").
 
-        Tools that mutate Domo data are skipped while DOMO_READ_ONLY is
-        enabled (the default) — set DOMO_READ_ONLY=0 to allow them.
+        Tools that mutate Domo data are skipped while every configured
+        instance is read-only (the default).
         """
         result = enable_toolset_by_name(toolset)
         try:
             await ctx.session.send_tool_list_changed()
         except Exception as exc:  # pragma: no cover - best-effort notification
             print(f"domo-mcp-server: tool list changed notification failed: {exc}", file=sys.stderr)
-        return result
+        return format_result(result)

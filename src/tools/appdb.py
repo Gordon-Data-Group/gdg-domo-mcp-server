@@ -21,7 +21,7 @@ def appdb_search_collections(
     ],
 ) -> Any:
     """Search AppDB collections with filters and sorting."""
-    return auth.post("/datastores/v1/collections/query", body=body)
+    return auth.post_read("/datastores/v1/collections/query", body=body)
 
 
 @domo_tool(toolset="appdb", read_only=True)
@@ -39,7 +39,7 @@ def appdb_query_documents(
     groupby: Annotated[str | None, "Field to group results by"] = None,
 ) -> Any:
     """Query documents in a collection using a MongoDB-style filter."""
-    return auth.post(
+    return auth.post_read(
         f"/datastores/v2/collections/{collection_id}/documents/query",
         body=body,
         limit=limit,
